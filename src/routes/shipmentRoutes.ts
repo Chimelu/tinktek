@@ -7,4 +7,4 @@ const shipmentRouter = express.Router();
 // Protected route for creating shipment, accessible only by Admins
 shipmentRouter.post("/create", protect, authorizeRoles("Admin"), createShipment);
 
-export default shipmentRouter;
+export default shipmentRouter
