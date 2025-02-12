@@ -7,12 +7,12 @@ export class CartService {
 
   private cartRepo: IDataAccessRepo;
   private productRepo: IDataAccessRepo;
-  private shopRepo: IDataAccessRepo;
 
-  constructor( cartRepo: IDataAccessRepo ,productRepo: IDataAccessRepo, shopRepo: IDataAccessRepo   ) {
+
+  constructor( cartRepo: IDataAccessRepo ,productRepo: IDataAccessRepo,  ) {
     this.cartRepo = cartRepo;
     this.productRepo = productRepo;
-    this.shopRepo = shopRepo;
+
   }
 
   // Create a new cart or update an existing cart
@@ -287,9 +287,7 @@ async updateDeliveryFeeAndDate(
     // Populate shop and product details
     const populatedItems = await Promise.all(
       cart.items.map(async (shop: any) => {
-        // Get shop details
-        const shopDetails = await this.shopRepo.findOne({ id: shop.shopId });
-        if (!shopDetails) throw new Error(`Shop not found: ${shop.shopId}`);
+      
   
         // Populate products in the shop
         const populatedProducts = await Promise.all(
@@ -319,8 +317,6 @@ async updateDeliveryFeeAndDate(
           deliveryAddress: shop.deliveryAddress || null,
           deliveryFee: shop.deliveryFee || null,
           deliveryDate: shop.deliveryDate || null,
-          shopName: shopDetails.name,
-          shopLogo: shopDetails.logo,
           totalFee: shop.totalFee, // Include the shop's totalFee
           products: populatedProducts,
         };

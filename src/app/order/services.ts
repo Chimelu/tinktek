@@ -14,7 +14,7 @@ class WayagramOrderService {
 
 
 
-  constructor(  orderRepo: IDataAccessRepo ,shop: IDataAccessRepo, product: IDataAccessRepo,  cart: IDataAccessRepo ) {
+  constructor(  orderRepo: IDataAccessRepo , product: IDataAccessRepo,  cart: IDataAccessRepo ) {
     this.orderRepo = orderRepo;
 
     this.product = product;

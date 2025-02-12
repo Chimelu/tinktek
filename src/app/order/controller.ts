@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { RepositoryFactory } from "../../infrastructure/repository-implementation/repository.factory";
 import config from "../../infrastructure/config/env.config";
-import { OrderModel , Shop, Product,Cart } from "../../core/models";
+import { OrderModel ,  Product,Cart } from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
 import WayagramOrderService from "./services";
@@ -17,11 +17,7 @@ const WayagramOrderRepoService: any = RepositoryFactory.setRepository(
 );
  
 
-const WayagramShopRepoService: any = RepositoryFactory.setRepository(
-  dbType,
-  Shop,
-  DBSource
-);
+
 
 
 const WayagramProductRepoService: any = RepositoryFactory.setRepository(
@@ -36,7 +32,7 @@ const wayagramCartRepoService: any = RepositoryFactory.setRepository(
   DBSource
 );
 // Initialize the order service
-const wayagramOrderService = new WayagramOrderService(WayagramOrderRepoService, WayagramShopRepoService, WayagramProductRepoService, wayagramCartRepoService);
+const wayagramOrderService = new WayagramOrderService(WayagramOrderRepoService, WayagramProductRepoService, wayagramCartRepoService);
 
 
 export const placeOrder = async (req: Request, res: Response): Promise<Response> => {

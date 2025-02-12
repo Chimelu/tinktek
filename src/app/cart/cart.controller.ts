@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { RepositoryFactory } from "../../infrastructure/repository-implementation/repository.factory";
 import config from "../../infrastructure/config/env.config";
-import { Product, Cart, Shop } from "../../core/models";
+import { Product, Cart} from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
 import WayagramProductService from "../product/products.services";
@@ -16,11 +16,7 @@ const WayagramProductRepoService: any = RepositoryFactory.setRepository(
     DBSource
   );
 
-  const WayagramShopRepoService: any = RepositoryFactory.setRepository(
-    dbType,
-    Shop,
-    DBSource
-  );
+;
 
 // Initialize repositories and services
 const wayagramCartRepoService: any = RepositoryFactory.setRepository(
@@ -28,7 +24,7 @@ const wayagramCartRepoService: any = RepositoryFactory.setRepository(
   Cart,
   DBSource
 );
-const wayagramCartService = new CartService(wayagramCartRepoService,WayagramProductRepoService,WayagramShopRepoService);
+const wayagramCartService = new CartService(wayagramCartRepoService,WayagramProductRepoService);
 
 const wayaGramProductRepoService: any = RepositoryFactory.setRepository(
   dbType,

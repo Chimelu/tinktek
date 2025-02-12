@@ -4,7 +4,7 @@ import ResponseMessage from "../infrastructure/responseHandler/response.handler"
 
 import ProductRouter from "./product/products.routes";
 import CategoryRouter from "./categories/categories.routes";
-import FavoritesRouter from "./favourites/favorites.routes";
+
 import CategoryAdminRouter from "./AdminRoutes/category";
 import CartRouter from "./cart/cart.routes";
 

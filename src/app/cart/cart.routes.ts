@@ -1,9 +1,8 @@
 import { Router } from "express";
 
-import { inputValidator } from "../../infrastructure/middleware";
+
 import * as cart from "./cart.controller";
-import authenticateToken from "../../infrastructure/middleware/authenticateToken.middleware";
-import { verifyToken } from "../../infrastructure/middleware/verifyToken";
+
 
 const CartRouter = Router();
 
@@ -14,7 +13,7 @@ CartRouter.post(
 );
 CartRouter.patch(
   "/request-deliveryFee",
-  verifyToken,
+
   cart.updateDeliveryAddress
 );
 CartRouter.get(
