@@ -18,10 +18,10 @@ AppRouter.get("/", (request: any, response: any) => {
   return ResponseMessage.success(
     response,
     {
-      service: "account-creation-and-profile-management-service",
+      service: "Joseph expensive  API",
       version: "2.0.0",
     },
-    "Welcome to WayaGram Account Creation and Profile Management API"
+    "Welcome to Joseph expensive  API"
   );
 });
 

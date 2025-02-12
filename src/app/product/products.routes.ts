@@ -20,7 +20,7 @@ ProductRouter.post(
 
 ProductRouter.get("/", product.getProductsAdmin);
 // ProductRouter.get("/get", product.getProductsUser);
-ProductRouter.put("/wayagramDeal-status/:productId", product.updateWayagramDealStatus);
+
 
 
 

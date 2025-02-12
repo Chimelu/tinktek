@@ -5,7 +5,7 @@ import {
   UnauthorizedError,
 } from "../../infrastructure/errorHandler/error";
 import {  UpdateProductData } from "../../core/entity/product.entity";
-import { createProductDto, updateProductDto, wayagramDealStatusDto } from "./product.dto";
+import { createProductDto, updateProductDto, } from "./product.dto";
 import { Product } from "../../core/models";
 import { Op } from 'sequelize';
 import cloudinary from "../../infrastructure/uploads/cloudinaryUpload";
@@ -109,20 +109,7 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
   }
 
 
-  public async updateWayagramDealStatus(productId: string, data: any) {
-    // Fetch the product by ID
-    const product = await this.product.findById(productId);
-    if (!product) {
-      throw new NotFoundError("Product not found.");
-    }
 
-    // Format the incoming data using the DTO
-    const updateData = wayagramDealStatusDto(data);
-
-    // Update the product's approval status
-    const updatedProduct = await this.product.updateOne({ id: productId },  updateData);
-    return updatedProduct;
-  }
   
   
 

@@ -23,6 +23,12 @@ export const DBSource = new Sequelize({
     acquire: 60000,
     idle: 10000,
   },
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  },
 
   logging: false, 
 });

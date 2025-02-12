@@ -95,31 +95,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
   }
 };
 
-export const updateWayagramDealStatus = async (req: Request, res: Response) => {
-  try {
-    const { productId } = req.params;
-    const data = req.body;
 
-    // Call the service to approve or reject the deal
-    const updatedProduct = await wayagramProductService.updateWayagramDealStatus(
-      productId,
-      data
-    );
-
-    return ResponseMessage.success(
-      res,
-      updatedProduct,
-      "Wayagram deal updated successfully."
-    );
-  } catch (error: any) {
-    console.error(error);
-    return ResponseMessage.error(
-      res,
-      error,
-      error.message || "Failed to update Wayagram deal."
-    );
-  }
-};
 
 
 

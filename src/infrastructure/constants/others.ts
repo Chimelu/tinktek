@@ -23,13 +23,6 @@ export enum BUYER_REQUEST_DELIVERY_TYPE {
 
 
 
-export enum BUYER_REQUEST_CONDITION {
-  NEW = "new",
-  USED = "used",
-  ALL = "all",
-}
-
-
 
 export enum DELIVERY_STATUS {
   PENDING = "pending",

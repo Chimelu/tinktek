@@ -23,9 +23,7 @@ export const createProductDto = (productData: any): Partial<IProduct> => {
 
 
 export const updateProductDto = (data: any) => {
-  if (data.discountTypeId && data.discountPercentage > 0) {
-    throw new Error("You can only provide either a discountTypeId or discountPercentage, not both.");
-  }
+
   return {
     name: data.name,
     categoryId: data.categoryId,
@@ -49,11 +47,4 @@ export const updateProductDto = (data: any) => {
   };
 };
 
-export const wayagramDealStatusDto = (data: any) => {
-  return {
-    wayagramDealApprove: data.wayagramDealApprove === false ? null : data.wayagramDealApprove,
-    wayagramDeal: data.wayagramDealApprove === false ? null : data.wayagramDeal,
-    wayagramDealRejectedReason: data.wayagramDealRejectedReason || "",
-  };
-};
 
