@@ -3,12 +3,11 @@ import { createOrderDto, UpdateDeliveryStatusDTO, UpdatePickupStatusDTO } from "
 import { IDataAccessRepo } from "../../core/repositories/dataAccess.repository";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { Product, Shop } from "../../core/models";
+import { Product } from "../../core/models";
 import { any } from "joi";
 
 class WayagramOrderService {
   private orderRepo: IDataAccessRepo;
-  private shop: IDataAccessRepo;
   private product: IDataAccessRepo;
 
   private cart: IDataAccessRepo;
@@ -17,7 +16,7 @@ class WayagramOrderService {
 
   constructor(  orderRepo: IDataAccessRepo ,shop: IDataAccessRepo, product: IDataAccessRepo,  cart: IDataAccessRepo ) {
     this.orderRepo = orderRepo;
-    this.shop = shop;
+
     this.product = product;
     this.cart = cart;
    
@@ -43,18 +42,15 @@ class WayagramOrderService {
     // Get the total fee for the shop directly from the cart
     const totalFee = shopItems.totalFee;
   
-    // Fetch the vendorId from the shop table using shopId
-    const shopDetails = await this.shop.findOne({ id: shopId });
-    if (!shopDetails) throw new Error("Shop not found.");
-    const vendorId = shopDetails.vendorId;
+  
+
     const deliveryToken = Math.floor(1000000000 + Math.random() * 9000000000).toString();
 
   
     // Prepare the order data, including the pickupAddress
     const orderData = {
       userId,
-      shopId,
-      vendorId,
+   
       items: shopItems.products.map((product: any) => ({
         productId: product.productId,
         quantity: product.quantity,
@@ -72,37 +68,7 @@ class WayagramOrderService {
     const newOrder = await this.orderRepo.create(orderData);   
   
     // Handle payment if applicable
-    if (totalFee > 0) {
-   
-  
-      // Call the wallet service to debit the user
-      const walletResponse = await axios.post(
-        'https://services.staging.wayagram.ng/wayagram-wallet/api/v2/client/payment/pay-for-service',
-        {
-          recipientId: vendorId,  // Vendor ID
-          userId: userId,  // User ID
-          amount: totalFee,
-          purpose: 'ECOMMERCE',
-          referenceId :newOrder.id,
-          description: `Payment for order ${newOrder.id}`,
-          metadata: { orderId: newOrder.id, shopId: shopId },
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-  
-      // Check the payment status and update order status
-      if (walletResponse.data.data.status === 'COMPLETED') {
-        newOrder.status = 'processing';  // Mark as successful if payment is completed
-      } else {
-        newOrder.status = 'pending';  // Otherwise, keep it pending
-      }
-  
-      // Save the updated order status
-      await newOrder.save({ silent: false });
-    }
-  
+    
     return newOrder;
   }
   
@@ -255,7 +221,6 @@ class WayagramOrderService {
         .flatMap((order: any) => order.items.map((item: any) => item.productId))
         .filter((id: string | undefined) => !!id);
   
-      const shopIds = orders.map((order: any) => order.shopId);
   
       const products = await Product.findAll({
         where: {
@@ -272,18 +237,7 @@ class WayagramOrderService {
       }, {});
       
   
-      const shops = await Shop.findAll({
-        where: {
-          id: {
-            [Op.in]: shopIds,
-          },
-        },
-      });
   
-      const shopDetailsMap = shops.reduce((map: Record<string, any>, shop: any) => {
-        map[shop.id] = { name: shop.name, phone: shop.phone };
-        return map;
-      }, {});
   
       const ordersWithDetails = orders.map((order: any) => {
         const itemsWithDetails = order.items.map((item: any) => {
@@ -294,13 +248,12 @@ class WayagramOrderService {
           };
         });
   
-        const shopDetails = shopDetailsMap[order.shopId] || { name: "Unknown", phone: "N/A" };
+
   
         return {
           ...order.dataValues,
           items: itemsWithDetails,
-          shopName: shopDetails.name,
-          shopPhone: shopDetails.phone,
+       
           deliveryType: order.deliveryFee > 0 ? "Delivery" : "Pickup",
         };
       });
