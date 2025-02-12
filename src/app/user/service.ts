@@ -10,7 +10,7 @@ import jwt from "jsonwebtoken";
 class UserService {
   constructor(private userRepo: IDataAccessRepo<IUser>) {
     this.userRepo = userRepo;
-  }
+  }  
 
   public async registerUser(userData: any) {
     // Validate and transform input data
@@ -40,7 +40,7 @@ class UserService {
 
     // Generate JWT token
     const token = jwt.sign({ id: user.id, role: user.role }, config.secret as string, {
-      expiresIn: "30d",
+      expiresIn: "5d",
     });
 
     return {
