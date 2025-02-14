@@ -14,6 +14,19 @@ export const createUserDto = (data: any): Partial<IUser> => {
     password: data.password,
   };
 };
+export const updateUserDto = (data: any): Partial<IUser> => {
+  // Required fields validation
+
+ 
+  return {
+
+    firstName: data.firstName,
+    lastName: data.lastName, 
+    phoneNumber: data.phoneNumber,
+    country:data.country,
+
+  };
+};
 
 
 

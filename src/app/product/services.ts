@@ -1,60 +1,68 @@
-import { IDataAccessRepo } from "../../core/repositories/dataAccess.repository";
+import { IDataAccessRepo, PaginationResult } from "../../core/repositories/dataAccess.repository";
 import { PRODUCT_RESPONSE } from "../../infrastructure/constants/responses/productResponse.contant";
 import {
   NotFoundError,
   UnauthorizedError,
 } from "../../infrastructure/errorHandler/error";
-import {  UpdateProductData } from "../../core/entity/product.entity";
 import { createProductDto, updateProductDto, } from "./product.dto";
 import { Product } from "../../core/models";
 import { Op } from 'sequelize';
 import cloudinary from "../../infrastructure/uploads/cloudinaryUpload";
+import { IProduct } from "../../core/entity/product.entity";
 
 
 class WayagramProductService {
   private product: IDataAccessRepo;
   private category: IDataAccessRepo;
+  private colorRepo: IDataAccessRepo;
 
 
 
-  constructor(product: IDataAccessRepo, category: IDataAccessRepo,  ) {
+  constructor(product: IDataAccessRepo, category: IDataAccessRepo, colorRepo: IDataAccessRepo, ) {
     this.product = product;
     this.category = category;
+    this.colorRepo = colorRepo;
    
    
 }
 
+
 public async createProduct(productData: any, images: Express.Multer.File[]) {
-    // Validate and format product data using the DTO
-    const productDto = createProductDto(productData);
-  
-    // Upload images to Cloudinary
-    if (images && images.length > 0) {
-      const uploadedImages: string[] = [];
-      for (const image of images) {
-        try {
-          // Convert image buffer to base64 (required for direct upload)
-          const base64Image = `data:${image.mimetype};base64,${image.buffer.toString("base64")}`;
-  
-          // Upload to Cloudinary
-          const uploadResult = await cloudinary.uploader.upload(base64Image, {
-            folder: "product-images", // Organize images in a folder
-            resource_type: "image",
-          });
-  
-          uploadedImages.push(uploadResult.secure_url);
-        } catch (error) {
-          console.error(`Error uploading image ${image.originalname}:`, error);
-        }
+  // Validate and format product data using the DTO
+  const productDto = createProductDto(productData);
+
+  // Upload images to Cloudinary
+  if (images && images.length > 0) {
+    const uploadedImages: string[] = [];
+    for (const image of images) {
+      try {
+        // Convert image buffer to base64 (required for direct upload)
+        const base64Image = `data:${image.mimetype};base64,${image.buffer.toString("base64")}`;
+
+        // Upload to Cloudinary
+        const uploadResult = await cloudinary.uploader.upload(base64Image, {
+          folder: "product-images", // Organize images in a folder
+          resource_type: "image",
+        });
+
+        // Push secure URL to the array
+        uploadedImages.push(uploadResult.secure_url);
+      } catch (error) {
+        console.error(`Error uploading image ${image.originalname}:`, error);
       }
-      productDto.images = uploadedImages;
     }
-  
-    // Create the product
-    const product = await this.product.create(productDto);
-    return product;
+    productDto.images = uploadedImages;
+  }
+
+  // Create the product in the database using the repository
+  const product = await this.product.create(productDto);
+  return product;
 }
-  
+
+
+
+
+
 
   public async deleteProduct(productId: string) {
     try {
@@ -94,9 +102,6 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
     // Validate and format product data using a DTO
     const updatedProductDto = updateProductDto(productData);
 
-
-
-  
    
     
     // Update the product in the database
@@ -113,7 +118,17 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
   
   
 
-  public async getProductsAdmin(page: number = 1, limit: number = 20, filters: any = {}) {
+  
+  public async getProductsAdmin(
+    page: number = 1, 
+    limit: number = 20, 
+    filters: any = {}
+  ): Promise<
+    PaginationResult<IProduct> & { 
+      subCategories?: { id: string; name: string }[]; 
+      colors?: { id: string; name: string }[]; 
+    }
+  > {
     try {
       const skip = (page - 1) * limit;
   
@@ -123,8 +138,13 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         // approve: true,
       };
   
+      // If a category filter is provided, use Sequelize's array operator
       if (filters.categoryId) {
-        query.categoryId = filters.categoryId;
+        // If filters.categoryId is a single string, wrap it in an array
+        const categoryFilter = Array.isArray(filters.categoryId)
+          ? filters.categoryId
+          : [filters.categoryId];
+        query.categoryId = { [Op.contains]: categoryFilter };
       }
   
       // Get the total count of products matching the query
@@ -137,78 +157,108 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         sort: { createdAt: -1 },
       });
   
-      // Check if products exist
       if (!products || products.length === 0) {
         return {
-          data: [],
-          pagination: {
-            currentPage: page,
-            totalPages: 0,
-            totalItems: 0,
-            itemsPerPage: limit,
-            hasNextPage: false,
-            hasPreviousPage: false,
-          },
+          docs: [],
+          totalDocs: 0,
+          limit,
+          page,
+          totalPages: 0,
+          hasNextPage: false,
+          nextPage: null,
+          hasPrevPage: false,
+          prevPage: null,
+          pagingCounter: 0,
         };
       }
   
-      // Extract product IDs, shop IDs, and category IDs from the fetched products
-      const productIds = products.map((product: { id: string }) => product.id);
-      const categoryIds = products.map((product: { categoryId: string }) => product.categoryId);
-    
+      // Extract category IDs from all products (flatten the arrays)
+      const categoryIds = products.reduce((acc: string[], product: any) => {
+        if (Array.isArray(product.categoryId)) {
+          return acc.concat(product.categoryId);
+        }
+        return acc;
+      }, []);
+      const uniqueCategoryIds = [...new Set(categoryIds)];
   
-  
-    
-  
-      // Fetch category details directly from the category database for each categoryId
-      const categories = await this.category.find({ id: categoryIds });
-      // console.log(categories)
+      // Fetch category details for these IDs
+      const categories = await this.category.find({ 
+        id: { [Op.in]: uniqueCategoryIds }
+      });
   
       // Create a map of categoryId to category details for quick lookup
       const categoryDetailsMap = categories.reduce((map: Record<string, any>, category: any) => {
-        map[category.id] = {
-          name: category.name,
-        };
+        map[category.id] = { name: category.name };
         return map;
       }, {});
-
-    
   
-      // Merge discounted prices, shop details, and category details into product objects
-      const productsWithDetails = products.map((product: any, index: number) => {
-   
-        const categoryDetails = categoryDetailsMap[product.categoryId] || { name: "Unknown" };
-  
-  
+      // Merge category names into each product object
+      const productsWithDetails = products.map((product: any) => {
+        // Map each category ID in product.categoryId to its name
+        const categoryNames = (product.categoryId || []).map((catId: string) => {
+          return categoryDetailsMap[catId]?.name || "Unknown";
+        });
         return {
           ...product.dataValues,
-          categoryName: categoryDetails.name,
-      
+          categoryNames, // Array of category names
         };
       });
+  
+      // If a category filter is provided, fetch subcategories
+      let subCategories: { id: string; name: string }[] | undefined = undefined;
+      if (filters.categoryId) {
+        subCategories = await this.category.find({ parentCategoryId: filters.categoryId });
+        subCategories = subCategories.map((cat: any) => ({
+          id: cat.id,
+          name: cat.name,
+        }));
+      }
+  
+      // Gather color IDs from the matching products
+      const allColorIds = new Set<string>();
+      products.forEach((product: any) => {
+        if (Array.isArray(product.color)) {
+          product.color.forEach((c: string) => allColorIds.add(c));
+        }
+      });
+  
+      let colors: { id: string; name: string }[] | undefined = undefined;
+      if (allColorIds.size > 0 && this.colorRepo) {
+        const colorIds = Array.from(allColorIds);
+        // Fetch colors from the color repository
+        const colorsData = await this.colorRepo.find({ id: { [Op.in]: colorIds } });
+        // Map each color to an object with id and name
+        colors = colorsData.map((color: any) => ({
+          id: color.id,
+          name: color.name,
+        }));
+      }
   
       // Calculate pagination metadata
       const totalPages = Math.ceil(totalCount / limit);
       const hasNextPage = page < totalPages;
       const hasPreviousPage = page > 1;
   
-      // Return products with pagination metadata
       return {
-        data: productsWithDetails,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalItems: totalCount,
-          itemsPerPage: limit,
-          hasNextPage,
-          hasPreviousPage,
-        },
+        docs: productsWithDetails,
+        totalDocs: totalCount,
+        limit,
+        page,
+        totalPages,
+        hasNextPage,
+        nextPage: hasNextPage ? page + 1 : null,
+        hasPrevPage: hasPreviousPage,
+        prevPage: hasPreviousPage ? page - 1 : null,
+        pagingCounter: skip + 1,
+        ...(subCategories && { subCategories }),
+        ...(colors && { colors }),
       };
     } catch (error) {
       console.error("Error in getProducts service:", error);
       throw error;
     }
   }
+  
 
 
 
@@ -223,10 +273,6 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         
   //     };
   
-  //     // Add filters if they are provided
-  //     if (filters.shopId) {
-  //       query.shopId = filters.shopId;
-  //     }
   //     if (filters.discountId) {
   //       query.discountTypeId = filters.discountId;  
   //     }
@@ -261,24 +307,14 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
   //     }
   
   //     // Extract product IDs, shop IDs, and category IDs from the fetched products
-  //     const productIds = products.map((product: { id: string }) => product.id);
-  //     const shopIds = products.map((product: { shopId: string }) => product.shopId);
-  //     const categoryIds = products.map((product: { categoryId: string }) => product.categoryId);
+  //        // Extract product IDs, shop IDs, and category IDs from the fetched products
+  //        const productIds = products.map((product: { id: string }) => product.id);
+  //        const categoryIds = products.map((product: { categoryId: string }) => product.categoryId);
   
-  //     // Calculate discounted prices using the helper function
-  //     const discountedPrices = await calculateDiscountedPrice(productIds);
+   
   
-  //     // Fetch shop details for each shopId
-  //     const shops = await this.shop.find({ id: shopIds });
+
   
-  //     // Create a map of shopId to shop details for quick lookup
-  //     const shopDetailsMap = shops.reduce((map: Record<string, any>, shop: any) => {
-  //       map[shop.id] = {
-  //         name: shop.name,
-  //         phone: shop.phone,
-  //       };
-  //       return map;
-  //     }, {});
   
   //     // Fetch category details directly from the category database for each categoryId
   //     const categories = await this.category.find({ id: categoryIds });
@@ -293,14 +329,10 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
   
   //     // Merge discounted prices, shop details, and category details into product objects
   //     const productsWithDetails = products.map((product: any, index: number) => {
-  //       const shopDetails = shopDetailsMap[product.shopId] || { name: "Unknown", phone: "N/A" };
   //       const categoryDetails = categoryDetailsMap[product.categoryId] || { name: "Unknown" };
   
   //       return {
   //         ...product.dataValues,
-  //         discountedPrice: discountedPrices[index],
-  //         shopName: shopDetails.name,
-  //         shopPhone: shopDetails.phone,
   //         categoryName: categoryDetails.name,
   //       };
   //     });

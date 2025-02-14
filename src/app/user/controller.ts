@@ -5,6 +5,7 @@ import { Product, Category, UserModel } from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
 import UserService from "./service";
+import { AuthenticatedRequest } from "../../infrastructure/middleware/authMiddleware";
 
 const { dbType } = config;
 
@@ -68,6 +69,19 @@ export const registerUser = async (req: Request, res: Response) => {
       return ResponseMessage.error(res, null, error.message || "An unexpected error occurred.");
     }
   };
+
+
+  export const updateProfileImage = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user.id;
+      const uploadedImageUrl = await userService.updateProfileImage(userId, req.file);
+  
+      return ResponseMessage.success(res, uploadedImageUrl, "Profile image updated successfully")
+    } catch (error:any) {
+        return ResponseMessage.error(res, null, error.message || "An unexpected error occurred.");
+    }
+  };
+  
   
   /**
    * Update Profile Controller

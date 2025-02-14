@@ -42,12 +42,11 @@ export default (sequelize: Sequelize): typeof Product => {
       categoryId: {
         type: DataTypes.ARRAY(DataTypes.UUID), // Ensures it's an array of UUIDs
         allowNull: false,
-        defaultValue: [],
        
       },
       
       name: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING,   
         allowNull: false,
       },
       description: {
@@ -65,16 +64,15 @@ export default (sequelize: Sequelize): typeof Product => {
       images: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: false,
-        defaultValue: [],
       },
       color: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
-        allowNull: false,
+        type: DataTypes.ARRAY(DataTypes.UUID),
+        allowNull: true,
         defaultValue: [],
       },
       size: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
-        allowNull: false,
+        type: DataTypes.ARRAY(DataTypes.UUID),  
+        allowNull: true,
         defaultValue: [],
       },
       availability: {

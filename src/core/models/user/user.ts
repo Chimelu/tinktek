@@ -14,6 +14,9 @@ class User extends Model<IUser, UserCreationAttributes> implements IUser {
   public email!: string;
   public phoneNumber!: string;
   public country!: COUNTRY;
+  public image!: string;
+  public isActive!: boolean;
+  public isVerified!: boolean;
   public password!: string;
   public role!: "Admin" | "User";
 }
@@ -51,6 +54,20 @@ export default (sequelize: Sequelize): typeof User => {
         validate: {
           isEmail: true,
         },
+      },
+      isVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: true,
+      },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        allowNull: true
+      },
+      image: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
       password: {
         type: DataTypes.STRING,

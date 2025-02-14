@@ -4,7 +4,7 @@ import config from "../../infrastructure/config/env.config";
 import { Product, Cart} from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
-import WayagramProductService from "../product/products.services";
+import WayagramProductService from "../product/services";
 import { CartService } from "./cart.services";
 import { AddToCartDTO } from "./cart.dto";
 

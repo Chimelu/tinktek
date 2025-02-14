@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import WayagramProductService from "./products.services";
+import WayagramProductService from "./services";
 import { RepositoryFactory } from "../../infrastructure/repository-implementation/repository.factory";
 import config from "../../infrastructure/config/env.config";
-import {  Product,Category} from "../../core/models";
+import {  Product,Category, ColorModel} from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
 
@@ -11,7 +11,11 @@ import ResponseMessage from "../../infrastructure/responseHandler/response.handl
 const { dbType } = config;
 
 
-
+const ColorRepoService: any = RepositoryFactory.setRepository(
+  dbType,
+  ColorModel,
+  DBSource
+);
 const WayagramCategoryRepoService: any = RepositoryFactory.setRepository(
   dbType,
   Category,
@@ -28,6 +32,7 @@ const WayagramProductRepoService: any = RepositoryFactory.setRepository(
 const wayagramProductService = new WayagramProductService(
   WayagramProductRepoService,
   WayagramCategoryRepoService,
+  ColorRepoService
 
 );
 

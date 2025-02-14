@@ -8,6 +8,8 @@ class Cart extends Model implements ICart {
       productId: string;
       quantity: number;
       price: number;
+      color:string
+      size:string
     }>;
   public  deliveryFee:number
   public  deliveryDate:Date

@@ -35,7 +35,7 @@ export default (sequelize: Sequelize): typeof Category => {
       },
       image: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         unique: true,
       },
       description: {

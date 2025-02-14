@@ -4,7 +4,7 @@ import config from "../../infrastructure/config/env.config";
 import { Product, Category } from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
-import WayagramCategoryService from "./categories.services";
+import WayagramCategoryService from "./services";
 
 const { dbType } = config;
 
@@ -66,6 +66,36 @@ export const getCategories = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("An error just occurred:", error);
     return ResponseMessage.error(res,null, error.message);
+  }
+};
+
+export const getParentCategories = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+
+  try {
+    // Fetch only root categories (categories with no parent)
+    const data = await wayagramCategoryService.getParentCategories(page, limit);
+    return ResponseMessage.success(res, data);
+  } catch (error: any) {
+    console.error("Error fetching root categories:", error);
+    return ResponseMessage.error(res, null, error.message);
+  }
+};
+
+export const getSubCategories = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  // Assume the root category id is passed as a URL parameter (e.g., /categories/:rootCategoryId/sub)
+  const { rootCategoryId } = req.params;
+
+  try {
+    // Fetch subcategories for the given root category
+    const data = await wayagramCategoryService.getSubCategoriesByRoot(rootCategoryId, page, limit);
+    return ResponseMessage.success(res, data);
+  } catch (error: any) {
+    console.error("Error fetching subcategories:", error);
+    return ResponseMessage.error(res, null, error.message);
   }
 };
 

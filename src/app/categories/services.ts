@@ -1,11 +1,12 @@
 import EventEmitter from "node:events";
 import { Op } from "sequelize";
-import { IDataAccessRepo } from "../../core/repositories/dataAccess.repository";
+import { IDataAccessRepo, PaginationResult } from "../../core/repositories/dataAccess.repository";
 import { createCategoryDto } from "./categories.dto";
 import { NotFoundError } from "../../infrastructure/errorHandler/error";
 import { CATEGORY_RESPONSE } from "../../infrastructure/constants/responses/categoryResponse.constant";
 import { Category } from "../../core/models";
 import cloudinary from "../../infrastructure/uploads/cloudinaryUpload";
+import { ICategory } from "../../core/entity/category.entity";
 
 
 class WayagramCategoryService {
@@ -15,7 +16,7 @@ class WayagramCategoryService {
 
 
 
-  public async createCategory(categoryData: any) {
+ public async createCategory(categoryData: any) {
     // Validate the incoming data using the DTO
     const data = createCategoryDto(categoryData);
   
@@ -87,6 +88,105 @@ class WayagramCategoryService {
       throw error;
     }
   }
+
+  public async getParentCategories(page: number = 1, limit: number = 20) {
+    try {
+      const skip = (page - 1) * limit;
+  
+      // Build a query to fetch categories with no parent and not deleted
+      const query: any = {
+        parentCategoryId: null,
+        isDeleted: false,
+      };
+  
+      // Get total count for pagination metadata
+      const totalCount = await this.categoryRepo.count(query);
+  
+      // Fetch paginated root categories matching the query
+      const categories = await this.categoryRepo.find(query, {
+        skip,
+        limit,
+        sort: { createdAt: -1 },
+      });
+  
+      if (!categories || categories.length === 0) {
+        throw new NotFoundError("No root categories found.");
+      }
+  
+      // Calculate pagination metadata
+      const totalPages = Math.ceil(totalCount / limit);
+      const hasNextPage = page < totalPages;
+      const hasPreviousPage = page > 1;
+  
+      // Return categories with pagination metadata
+      return {
+        data: categories,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems: totalCount,
+          itemsPerPage: limit,
+          hasNextPage,
+          hasPreviousPage,
+        },
+      };
+    } catch (error) {
+      console.error("Error in getRootCategories service:", error);
+      throw error;
+    }
+  }
+
+  public async getSubCategoriesByRoot(
+    rootCategoryId: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginationResult<ICategory> | { data: ICategory[] }> {
+    try {
+      const skip = (page - 1) * limit;
+  
+      // Build a query object to filter subcategories for the given root category
+      const query: Record<string, any> = {
+        parentCategoryId: rootCategoryId,
+        isDeleted: false,
+      };
+  
+      // Get total count of subcategories matching the query
+      const totalCount = await this.categoryRepo.count(query);
+  
+      // Fetch paginated subcategories matching the query
+      const subCategories = await this.categoryRepo.find(query, {
+        skip,
+        limit,
+        sort: { createdAt: -1 },
+      });
+  
+      if (!subCategories || subCategories.length === 0) {
+        throw new NotFoundError("No subcategories found for this root category.");
+      }
+  
+      // Calculate pagination metadata
+      const totalPages = Math.ceil(totalCount / limit);
+      const hasNextPage = page < totalPages;
+      const hasPrevPage = page > 1;
+  
+      return {
+        docs: subCategories,
+        totalDocs: totalCount,
+        limit: limit,
+        page: page,
+        totalPages: totalPages,
+        hasNextPage: hasNextPage,
+        nextPage: hasNextPage ? page + 1 : null,
+        hasPrevPage: hasPrevPage,
+        prevPage: hasPrevPage ? page - 1 : null,
+        pagingCounter: skip + 1,
+      };
+    } catch (error) {
+      console.error("Error in getSubCategoriesByRoot service:", error);
+      throw error;
+    }
+  }
+  
   
 
   public async editCategory(categoryId: string, updateData: any) {
