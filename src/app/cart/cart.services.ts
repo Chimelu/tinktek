@@ -2,6 +2,7 @@ import { Cart } from "../../core/models";
 import { Op } from 'sequelize';
 import { IDataAccessRepo } from "../../core/repositories/dataAccess.repository";
 import {AddToCartDTO } from "./cart.dto"; // Ensure you have this DTO defined
+import { NotFoundError } from "../../infrastructure/errorHandler/error";
 
 export class CartService {
 
@@ -17,7 +18,7 @@ export class CartService {
 
   // Create a new cart or update an existing cart
   async addToCart(dto: AddToCartDTO) {
-    const { userId, shopId, productId, quantity, price } = dto;
+    const { userId, productId, quantity, price } = dto;
   
     // Check if the user already has a cart
     const existingCart = await this.cartRepo.findOne({ userId });
@@ -26,248 +27,96 @@ export class CartService {
       // Create a new cart if none exists
       const newCart = {
         userId,
-        items: [
-          {
-            shopId,
-            products: [{ productId, quantity, price: quantity * price }], // Single product price calculation
-            totalFee: quantity * price, // Total fee for this shop
-          },
-        ],
+        items: [{ productId, quantity, price: quantity * price }], // FIXED: Changed products to items
+        totalFee: quantity * price, // FIXED: Using totalFee as defined in DTO and Model
       };
-      return this.cartRepo.create(newCart);   
+      return this.cartRepo.create(newCart);
     } else {
-      // Update the existing cart
-      let shopExists = false;
       let productExists = false;
   
-      const updatedItems = existingCart.items.map((shop: any) => {
-        if (shop.shopId === shopId) {
-          shopExists = true;
-          shop.products = shop.products.map((product: any) => {
-            if (product.productId === productId) {
-              productExists = true;
-              product.quantity += quantity;
-              product.price = product.quantity * price; // Update price for the product
-            }
-            return product;
-          });
-  
-          // Add the product if it doesn't already exist in this shop
-          if (!productExists) {
-            shop.products.push({ productId, quantity, price: quantity * price });
-          }
-  
-          // Recalculate the totalFee for the shop
-          shop.totalFee = shop.products.reduce(
-            (sum: any, product: any) => sum + product.price,
-            0
-          );
+      // Update the existing cart's items array
+      const updatedItems = existingCart.items.map((item: any) => {
+        if (item.productId === productId) {
+          productExists = true;
+          item.quantity += quantity;
+          item.price = item.quantity * price;
         }
-        return shop;
+        return item;
       });
   
-      // Add a new shop if it doesn't already exist in the cart
-      if (!shopExists) {
-        updatedItems.push({
-          shopId,
-          products: [{ productId, quantity, price: quantity * price }],
-          totalFee: quantity * price, // Total fee for this new shop
-        });
+      if (!productExists) {
+        updatedItems.push({ productId, quantity, price: quantity * price });
       }
   
-      // Update the cart with the modified items
-      return this.cartRepo.updateOne({ userId }, { items: updatedItems });
+      const totalFee = updatedItems.reduce(
+        (sum: number, item: any) => sum + item.price,
+        0
+      );
+  
+      return this.cartRepo.updateOne({ userId }, { items: updatedItems, totalFee });
     }
   }
   
   
-  
-  
-async updateDeliveryAddress(userId: string, shopId: string, deliveryAddress: string) {
-  // Fetch the user's cart
-  const existingCart = await this.cartRepo.findOne({ userId });
-
-  if (!existingCart) {
-    throw new Error("Cart not found for this user.");
-  }
-
-  // Update delivery fee for the specific shop in the items array
-  const updatedItems = existingCart.items.map((shop: any) => {
-    if (shop.shopId === shopId) {
-      shop.deliveryAddress= deliveryAddress; // Update the delivery fee for the specific shop
-    }
-    return shop;
-  });
-
-  // Save the updated cart to the database
-  const updatedCart = await this.cartRepo.updateOne(
-    { userId },
-    { items: updatedItems }
-  );
-
-  return updatedCart;
-}
-
-
-
-
-async getDeliveryAddress(shopId: string): Promise<any[]> {
-  // Query the database for all carts containing the specified shopId
-  const carts = await Cart.findAll({
-    where: {
-      items: {
-        [Op.contains]: [{ shopId }], // Check if any item in the cart contains the specified shopId
-      },
-    },
-    attributes: ['id', 'userId', 'items'], // Include userId in the selected fields
-    order: [['updatedAt', 'DESC']], // Optional: Sort by updatedAt, most recent first
-  });
-
-  // Log to see the fetched carts (for debugging)
-  console.log(carts);
-
-  // Filter items in each cart for matching shopId and non-null deliveryAddress
-  const filteredCarts = carts.map((cart) => {
-    // Filter the items of each cart to include only those with the correct shopId and a non-null deliveryAddress
-    const items = cart.items.filter(
-      (item: any) =>
-        item.shopId === shopId && // Ensure the item has the correct shopId
-        item.deliveryAddress // Ensure the item has a deliveryAddress
-    
-    );
-    return {
-      userId: cart.userId, // Include the userId in the response
-      items, // Filtered items
-    };
-  });
-
-  // Return only carts that have relevant items (i.e., items with non-null deliveryAddress)
-  return filteredCarts.filter((cart) => cart.items.length > 0); // Only include carts with items that match the conditions
-}
-
-
-
-async updateDeliveryFeeAndDate(
-  shopId: string,
-  userId: string,
-  deliveryFee: number,
-  deliveryDate: Date
-): Promise<any> {
-  // Find the user's cart
-  const cart = await this.cartRepo.findOne({ userId });
-
-  if (!cart) {
-    throw new Error("Cart not found.");
-  }
-  if (!shopId || !userId || !deliveryFee || !deliveryDate) {
-    throw new Error(
-      "Shop ID, User ID, Delivery Fee, and Delivery Date are required.",
-    );
-  }
-
-  // Update the specific shop's delivery fee and date, and just add the deliveryFee to the existing totalFee
-  cart.items = cart.items.map((item: any) => {
-    if (item.shopId === shopId) {
-      // Just add the new deliveryFee to the existing totalFee (no recalculation of product prices)
-      const updatedTotalFee = item.totalFee + deliveryFee;
-
-      return {
-        ...item,
-        deliveryFee,     // Update delivery fee
-        deliveryDate,    // Update delivery date
-        totalFee: updatedTotalFee,  // Add the deliveryFee to the existing totalFee
-      };
-    }
-    return item;
-  });
-
-  // Recalculate the cart's total fee (sum of all shop's totalFee)
-  const totalCartFee = cart.items.reduce(
-    (sum: number, shop: any) => sum + shop.totalFee,
-    0
-  );
-
-  // Save the updated cart with the recalculated total fee for the entire cart
-  await this.cartRepo.updateOne({ userId }, { items: cart.items, total: totalCartFee });
-
-  return cart;
-}
-
-
-
-
 
   // Increment product quantity
 
-  async incrementProduct(userId: string, shopId: string, productId: string) {
+  async incrementProduct(userId: string, productId: string) {
     // Find the cart for the user
     const cart = await this.cartRepo.findOne({ userId });
     if (!cart) throw new Error("Cart not found");
   
     // Update the cart items
-    const updatedItems = cart.items.map((shop: any) => {
-      if (shop.shopId === shopId) {
-        shop.products = shop.products.map((product: any) => {
-          if (product.productId === productId) {
-            // Increment quantity and recalculate price
-            product.quantity += 1;
-            product.price = product.quantity * (product.price / (product.quantity - 1)); // Unit price * new quantity
-          }
-          return product;
-        });
-  
-        // Recalculate totalFee for the shop
-        shop.totalFee = shop.products.reduce(
-          (sum: any, product: any) => sum + product.price,
-          0
-        );
+    const updatedItems = cart.items.map((item: any) => {
+      if (item.productId === productId) {
+        // Increment quantity and recalculate price
+        item.quantity += 1;
+        item.price = item.quantity * (item.price / (item.quantity - 1)); // Maintain unit price
       }
-      return shop;
+      return item;
     });
   
+    // Recalculate totalFee for the cart
+    const totalFee = updatedItems.reduce((sum: number, item: any) => sum + item.price, 0);
+  
     // Update the cart with the modified items
-    return this.cartRepo.updateOne({ userId }, { items: updatedItems });
+    return this.cartRepo.updateOne({ userId }, { items: updatedItems, totalFee });
   }
+  
   
 
 
 
   // Decrement product quantity
 
-  async decrementProduct(userId: string, shopId: string, productId: string) {
+  async decrementProduct(userId: string, productId: string) {
     // Find the cart for the user
     const cart = await this.cartRepo.findOne({ userId });
-    if (!cart) throw new Error("Cart not found");
+    if (!cart) throw new NotFoundError("Cart not found");
   
     // Update the cart items
-    const updatedItems = cart.items.map((shop: any) => {
-      if (shop.shopId === shopId) {
-        shop.products = shop.products
-          .map((product: any) => {
-            if (product.productId === productId) {
-              product.quantity -= 1;
-              if (product.quantity > 0) {
-                product.price = product.quantity * (product.price / (product.quantity + 1)); // Update price based on new quantity
-              }
-            }
-            return product;
-          })
-          .filter((product: any) => product.quantity > 0); // Remove product if quantity is 0
+    const updatedItems = cart.items
+      .map((item: any) => {
+        if (item.productId === productId) {
+          item.quantity -= 1;
   
-        // Recalculate totalFee for the shop
-        shop.totalFee = shop.products.reduce(
-          (sum: any, product: any) => sum + product.price,
-          0
-        );
-      }
-      return shop;
-    });
+          if (item.quantity > 0) {
+            // Maintain unit price while updating total price
+            item.price = item.quantity * (item.price / (item.quantity + 1));
+            return item;
+          }
+          // If quantity becomes 0, exclude the item
+          return null;
+        }
+        return item;
+      })
+      .filter(Boolean); // Remove null items (products with quantity 0)
   
-    // Remove the shop if it no longer has products
-    const filteredItems = updatedItems.filter((shop: any) => shop.products.length > 0);
+    // Recalculate totalFee for the cart
+    const totalFee = updatedItems.reduce((sum: number, item: any) => sum + item.price, 0);
   
     // Update the cart with the modified items
-    return this.cartRepo.updateOne({ userId }, { items: filteredItems });
+    return this.cartRepo.updateOne({ userId }, { items: updatedItems, totalFee });
   }
   
 

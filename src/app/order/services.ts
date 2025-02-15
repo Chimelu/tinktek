@@ -113,62 +113,7 @@ class WayagramOrderService {
   }
 
 
-  async completeOrder(deliveryToken: string, bearerToken: string): Promise<any> {
-    // Find the order with the matching deliveryToken
-    const order = await this.orderRepo.findOne({ deliveryToken });
-  
-    if (!order) {
-      throw new Error("Invalid delivery token or order not found.");
-    }
-  
-    // Update the statuses based on the presence of a delivery fee
-    if (order.deliveryFee && order.deliveryFee > 0) {
-      order.deliveryStatus = "completed"; // Update deliveryStatus to completed
-    } else {
-      order.pickupStatus = "completed"; // Update pickupStatus to completed
-    }
-  
-    // Update the overall status of the order to completed
-    order.status = "completed";
-  
-    // Save the changes to the database
-    await order.save();
-  
-    // Prepare the settlement payload
-    const settlementPayload = {
-      referenceId: order.orderId, // Use the order ID as the referenceId
-      recipientId: order.vendorId, // Use the vendor ID as the recipientId
-      purpose: "ECOMMERCE", // Settlement purpose
-    };
-  
-    // Call the settlement microservice with Bearer token
-    const settlementResponse = await fetch(
-      "https://services.staging.wayagram.ng/wayagram-wallet/api/v2/client/payment/handle-settlement",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${bearerToken}`, // Add Bearer token
-        },
-        body: JSON.stringify(settlementPayload),
-      }
-    );
-  
-    const settlementResult = await settlementResponse.json();
-  
-    // Check if the settlement was successful
-    if (!settlementResult.status || settlementResult.statusCode !== 200) {
-      throw new Error(
-        `Settlement failed: ${settlementResult.message || "Unknown error"}`
-      );
-    }
-  
-    // Return the updated order and settlement response
-    return {
-      order,
-      settlementMessage: settlementResult.message,
-    };
-  }
+
   
 
   public async getAllOrders(

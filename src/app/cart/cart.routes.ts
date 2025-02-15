@@ -11,15 +11,7 @@ CartRouter.post(
 
   cart.addToCart
 );
-CartRouter.patch(
-  "/request-deliveryFee",
 
-  cart.updateDeliveryAddress
-);
-CartRouter.get(
-  "/delivery-address/:shopId",
-  cart.getDeliveryAddress
-);
 CartRouter.patch(
   "/update-quantity",
   cart.incrementProductQuantity
@@ -32,10 +24,7 @@ CartRouter.get(
   "/:userId",
   cart.getUserCart
 );
-CartRouter.patch(
-  "/shop/:shopId/user/:userId/update-fee-and-date",
-  cart.updateDeliveryFeeAndDate
-);
+
 
 
 

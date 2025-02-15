@@ -13,7 +13,6 @@ const upload = multer();
 
 
 OrderRouter.post("/place-order",  order.placeOrder);
-OrderRouter.post("/complete-order",  order.completeOrder);
 OrderRouter.get("/get-orders", order.getAllOrders);
 OrderRouter.put("/deliveryStatus/:orderId",  order.updateDeliveryStatus);
 OrderRouter.put("/pickupStatus/:orderId", order.updatePickupStatus);

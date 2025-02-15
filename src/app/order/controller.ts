@@ -180,37 +180,7 @@ export const updatePickupStatus = async (req: Request, res: Response): Promise<R
 
 
 
-  export const completeOrder = async (req: Request, res: Response): Promise<Response> => {
-    try {
-      const { deliveryToken } = req.body;
-      const token = req.headers.authorization?.split(" ")[1]; 
-  
-      if (!deliveryToken) {
-        return ResponseMessage.error(res, null, "Delivery token is required.", 400);
-      }
-  
-      const updatedOrder = await wayagramOrderService.completeOrder(deliveryToken,token);
-  
-      if (!updatedOrder) {
-        return ResponseMessage.error(res, null, "Order not found or invalid delivery token.", 404);
-      }
-  
-      return ResponseMessage.success(
-        res,
-        updatedOrder,
-        "Order status updated successfully.",
-        200
-      );
-    } catch (error: any) {
-      console.error(error);
-      return ResponseMessage.error(
-        res,
-        error,
-        error.message || "Failed to complete order.",
-        500
-      );
-    }
-  };
+
 
   
 

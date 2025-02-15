@@ -25,7 +25,7 @@ export const createColor = async (req: Request, res: Response) => {
     // Include file in the payload
  
 
-    // Call the service to create a category
+    // Call the service to create a color
     const newColor = await colorService.createColor(req.body);
 
     return ResponseMessage.success(res, newColor);

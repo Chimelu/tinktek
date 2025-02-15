@@ -11,7 +11,7 @@ import cloudinary from "../../infrastructure/uploads/cloudinaryUpload";
 import { IProduct } from "../../core/entity/product.entity";
 
 
-class WayagramProductService {
+class ProductService {
   private product: IDataAccessRepo;
   private category: IDataAccessRepo;
   private colorRepo: IDataAccessRepo;
@@ -61,9 +61,6 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
 
 
 
-
-
-
   public async deleteProduct(productId: string) {
     try {
       // Find the product by its ID
@@ -92,30 +89,76 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
   }
   
 
-  public async editProduct(productId: string, productData: any, images: Express.Multer.File[] = []) {
+  public async editProduct(
+    productId: string,
+    productData: any,
+    images: Express.Multer.File[] = []
+  ): Promise<IProduct | null> {
     // Fetch the product to ensure it exists
     const existingProduct = await this.product.findById(productId);
     if (!existingProduct) {
       throw new NotFoundError("Product not found.");
     }
   
-    // Validate and format product data using a DTO
+    // Validate and format product data using the DTO
+    // This DTO should return only allowed fields (e.g. name, description, etc.)
     const updatedProductDto = updateProductDto(productData);
-
-   
-    
+  
+    // Merge array fields rather than replacing them
+    // Merge color arrays
+    if (updatedProductDto.color) {
+      updatedProductDto.color = Array.from(
+        new Set([...(existingProduct.color || []), ...updatedProductDto.color])
+      );
+    }
+  
+    // Merge size arrays
+    if (updatedProductDto.size) {
+      updatedProductDto.size = Array.from(
+        new Set([...(existingProduct.size || []), ...updatedProductDto.size])
+      );
+    }
+  
+    // Merge categoryId arrays
+    if (updatedProductDto.categoryId) {
+      updatedProductDto.categoryId = Array.from(
+        new Set([...(existingProduct.categoryId || []), ...updatedProductDto.categoryId])
+      );
+    }
+  
+    // Handle image uploads: if new images are provided, upload them to Cloudinary and merge with existing images.
+    if (images && images.length > 0) {
+      const uploadedImages: string[] = [];
+      for (const image of images) {
+        try {
+          // Convert image buffer to base64 (for direct upload)
+          const base64Image = `data:${image.mimetype};base64,${image.buffer.toString("base64")}`;
+  
+          // Upload to Cloudinary
+          const uploadResult = await cloudinary.uploader.upload(base64Image, {
+            folder: "product-images", // Organize images in a folder
+            resource_type: "image",
+          });
+          uploadedImages.push(uploadResult.secure_url);
+        } catch (error) {
+          console.error(`Error uploading image ${image.originalname}:`, error);
+        }
+      }
+      // Merge new images with existing images
+      updatedProductDto.images = Array.from(
+        new Set([...(existingProduct.images || []), ...uploadedImages])
+      );
+    }
+  
     // Update the product in the database
     await this.product.updateOne({ id: productId }, updatedProductDto);
   
-    // Fetch the updated product
+    // Fetch and return the updated product
     const updatedProduct = await this.product.findById(productId);
-  
     return updatedProduct;
   }
-
-
-
   
+
   
 
   
@@ -145,6 +188,25 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
           ? filters.categoryId
           : [filters.categoryId];
         query.categoryId = { [Op.contains]: categoryFilter };
+      }
+  
+      // Add filter for color IDs if provided
+      if (filters.colorId) {
+        const colorFilter = Array.isArray(filters.colorId)
+          ? filters.colorId
+          : [filters.colorId];
+        query.color = { [Op.contains]: colorFilter };
+      }
+  
+      // Add filter for subcategory IDs if provided
+      if (filters.subCategoryId) {
+        const subCategoryFilter = Array.isArray(filters.subCategoryId)
+          ? filters.subCategoryId
+          : [filters.subCategoryId];
+        // If category filter already exists, merge with an AND condition; otherwise, just set it.
+        query.categoryId = query.categoryId
+          ? { [Op.and]: [ query.categoryId, { [Op.contains]: subCategoryFilter } ] }
+          : { [Op.contains]: subCategoryFilter };
       }
   
       // Get the total count of products matching the query
@@ -373,4 +435,4 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
   
 }
 
-export default WayagramProductService;
+export default ProductService;
