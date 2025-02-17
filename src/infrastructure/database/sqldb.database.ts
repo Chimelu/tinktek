@@ -45,7 +45,7 @@ const SequelizeMigration = async () => {
   
   for (const schema in schemas) {
     // console.log(`Syncing model: ${schema}`);
-    await schemas[schema].sync({ force: true });
+    await schemas[schema].sync({ alter: true });
 
   }
     
