@@ -5,6 +5,7 @@ export interface IShippingAddress {
     country: string;
     city: string;
     state: string;
+    region: string;
     address: string;
     active: boolean;
     isDeleted: boolean;
@@ -12,4 +13,3 @@ export interface IShippingAddress {
     createdAt?: Date;
     updatedAt?: Date;
   }
-  

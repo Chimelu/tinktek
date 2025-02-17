@@ -15,8 +15,7 @@ class Order extends Model<IOrder, OrderCreationAttributes> implements IOrder {
     price: number;
     name: string;
   }>;
-  public shopId!: string;
-  public vendorId!: string;
+
   public total!: number;
   public status!: "pending" | "processing" | "completed" | "cancelled";
   public pickupAddress!: string | null;
@@ -52,14 +51,6 @@ export default (sequelize: Sequelize): typeof Order => {
       items: {
         type: DataTypes.JSONB,
         allowNull: false,  
-      },
-      shopId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-      },
-      vendorId: {
-        type: DataTypes.UUID,
-        allowNull: true,
       },
       total: {
         type: DataTypes.DECIMAL(10, 2),

@@ -6,6 +6,7 @@ import User from "./user/user"
 import color from "./product/color";
 import size from "./product/size";
 import ShippingAddress from "./shipping.address.ts/ShippingAddress";
+import deliveryFee from "./DeliveryFee/deliveryFee";
 
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import Order from './order/Order.model'
@@ -20,6 +21,7 @@ export const UserModel = User(DBSource)
 export const ColorModel = color(DBSource)
 export const SizeModel = size(DBSource)
 export const AddressModel = ShippingAddress(DBSource)
+export const RegionModel = deliveryFee(DBSource)
 
 
 

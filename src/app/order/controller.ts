@@ -39,15 +39,15 @@ export const placeOrder = async (req: Request, res: Response): Promise<Response>
   try {
     // Extract the token from the Authorization header
     const token = req.headers.authorization?.split(" ")[1]; // Assuming the token is in the format 'Bearer <token>'
-    const { cartId, userId, pickupAddress, shopId } = req.body; // Add pickupAddress to the body
-    if (!token) {
-      return ResponseMessage.error(res, null, "Authorization token is required.", 401);
-    }
+    const { cartId, userId, pickupAddress,  paymentReference } = req.body; // Add pickupAddress to the body
+    // if (!token) {
+    //   return ResponseMessage.error(res, null, "Authorization token is required.", 401);
+    // }
 
  
 
     // Pass the token to the order service for payment processing
-    const newOrder = await wayagramOrderService.placeOrder(cartId, userId, pickupAddress, shopId , token ); // Pass object here
+    const newOrder = await wayagramOrderService.placeOrder(cartId, userId, pickupAddress, paymentReference); // Pass object here
 
     return ResponseMessage.success(
       res,
