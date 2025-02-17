@@ -23,12 +23,12 @@ export const DBSource = new Sequelize({
     acquire: 60000,
     idle: 10000,
   },
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  },
+  // dialectOptions: {
+  //   ssl: {
+  //     require: true,
+  //     rejectUnauthorized: false
+  //   }
+  // },
 
   logging: false, 
 });
@@ -45,7 +45,7 @@ const SequelizeMigration = async () => {
   
   for (const schema in schemas) {
     // console.log(`Syncing model: ${schema}`);
-    await schemas[schema].sync({ alter: true });
+    await schemas[schema].sync({ force: true });
 
   }
     
