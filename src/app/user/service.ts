@@ -6,6 +6,7 @@ import { NotFoundError, UnauthorizedError } from "../../infrastructure/errorHand
 import config from "../../infrastructure/config/env.config";
 import jwt from "jsonwebtoken";
 import cloudinary from "../../infrastructure/uploads/cloudinaryUpload";
+import { sendEmail } from "../../core/services/mailService";
 // import { USER_RESPONSE } from "../../infrastructure/constants/responses/userResponse.constant";
 
 class UserService {
@@ -21,12 +22,68 @@ class UserService {
     const saltRounds = 10;
     data.password = await bcrypt.hash(data.password, saltRounds);
 
-    // Save the user to the database
-    const newUser = await this.userRepo.create(data);
-    if (!newUser) throw new NotFoundError("user not found");
+    // Generate a 4-digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit OTP
 
-    return newUser;
+    // Save the user to the database
+    const newUser = await this.userRepo.create({ ...data, otp });
+    if (!newUser) throw new NotFoundError("User not found");
+
+    // Send OTP via email
+    await sendEmail(
+      newUser.email,
+      "Your OTP Code",
+      `Your verification code is: ${otp}. It expires in 10 minutes.`
+    );
+
+    return { message: "User registered successfully. OTP sent to email.", user: newUser };
   }
+
+
+  public async resendOtp(email: string) {
+    // Find the user by email
+    const user = await this.userRepo.findOne({ email });
+    if (!user) throw new NotFoundError("User not found");
+
+    // Generate a new 4-digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Update user record with new OTP
+    await this.userRepo.updateOne({id:user.id},  {otp} );
+
+    // Send the new OTP via email
+    await sendEmail(
+      user.email,
+      "Your New OTP Code",
+      `Your new verification code is: ${otp}. It expires in 10 minutes.`
+    );
+
+    return { message: "OTP resent successfully. Check your email." };
+  }
+
+
+  public async verifyOtp(email: string, otp: string) {
+    // Find the user by email
+    const user = await this.userRepo.findOne({ email });
+    if (!user) throw new NotFoundError("User not found");
+
+    // Check if OTP matches
+    if (user.otp !== otp) {
+        throw new UnauthorizedError("Invalid OTP. Please try again.");
+    }
+
+    // Update user's isVerified status to true
+    await this.userRepo.updateOne(
+        { id: user.id }, 
+        {isVerified: true } 
+    );
+
+    return { message: "OTP verified successfully. Your account is now verified." };
+}
+
+
+
+
 
 
   public async loginUser(email: string, password: string) {
