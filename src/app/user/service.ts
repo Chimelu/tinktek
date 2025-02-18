@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { IDataAccessRepo } from "../../core/repositories/dataAccess.repository";
+import { IDataAccessRepo, PaginateOptions, PaginationResult } from "../../core/repositories/dataAccess.repository";
 import { createUserDto, updateUserDto } from "./dto";
 import { IUser } from "../../core/entity/user.entity";
 import { NotFoundError, UnauthorizedError } from "../../infrastructure/errorHandler/error";
@@ -152,6 +152,24 @@ class UserService {
 
     return updatedUser;
 }
+
+
+public async getUsers(
+  options: PaginateOptions,
+  userId?: string
+): Promise<PaginationResult<IUser> |IUser | null> {
+  if (userId) {
+    const user = await this.userRepo.findOne({ id: userId });
+    if (!user) throw new NotFoundError("User not found");
+    return user;
+  }
+
+  return this.userRepo.paginate({
+    ...options,
+    filters: {},
+  });
+}
+
 
 
 

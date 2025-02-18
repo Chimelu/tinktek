@@ -135,3 +135,30 @@ export const registerUser = async (req: Request, res: Response) => {
       return ResponseMessage.error(res, null, error.message || "An unexpected error occurred.");
     }
   };
+
+
+  export const getUsers = async (req: Request, res: Response) => {
+    try {
+      const { page = 1, limit = 10, search, orderBy, orderDirection, fromDate, toDate , userId} = req.query;
+   
+  
+      const options = {
+        limit: Number(limit),
+        offset: (Number(page) - 1) * Number(limit),
+        search: search ? String(search) : undefined,
+        orderBy: orderBy ? String(orderBy) : "createdAt",
+        orderDirection: orderDirection === "ASC" ? "ASC" : "DESC",
+        fromDate: fromDate ? String(fromDate) : undefined,
+        toDate: toDate ? String(toDate) : undefined,
+      };
+  
+      // Fetch either a single user or paginated users list
+      const result = await userService.getUsers(options as any, userId as any);
+  
+      return ResponseMessage.success(res, result, userId ? "User retrieved successfully" : "Users retrieved successfully");
+    } catch (error: any) {
+      console.error(error);
+      return ResponseMessage.error(res, null, error.message || "An unexpected error occurred.");
+    }
+  };
+  
