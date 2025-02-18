@@ -1,0 +1,12 @@
+{
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#000000",
+        "titleBar.activeBackground": "#000000",
+        "titleBar.activeForeground": "#F7FCEE"
+    },
+    "prettier.requireConfig": false,
+    "files.autoSave": "afterDelay",
+    "cSpell.words": ["Mongisrael", "voks"],
+    "git.ignoreLimitWarning": true,
+    "DockerRun.DisableDockerrc": true
+}
