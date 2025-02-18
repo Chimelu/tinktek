@@ -13,6 +13,7 @@ class User extends Model<IUser, UserCreationAttributes> implements IUser {
   public lastName!: string;
   public email!: string;
   public phoneNumber!: string;
+  public otp!: string;
   public country!: COUNTRY;
   public image!: string;
   public isActive!: boolean;
@@ -41,6 +42,10 @@ export default (sequelize: Sequelize): typeof User => {
       lastName: {
         type: DataTypes.STRING,
         allowNull: false,
+      },
+      otp: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
       country: {
         type: DataTypes.ENUM,

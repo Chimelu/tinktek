@@ -20,12 +20,13 @@ export class SizeService {
     // Handle Cloudinary image upload if an image file is provided
     
   
-    // Create the category in the database
+    // Create the size in the database
     const newSize = await this.sizeRepo.createMany(data);
     if (!newSize) throw new NotFoundError('size not found');
   
     return newSize;
   }
+  
   
   
 }

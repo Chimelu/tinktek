@@ -48,72 +48,12 @@ export const addToCart = async (req: Request, res: Response): Promise<Response> 
 };
  
 
-export const updateDeliveryAddress = async (req: Request, res: Response): Promise<Response> => {
-  try {
-    const { userId, shopId, deliveryAddress } = req.body;
-
-
-    // Call the service to update the delivery fee
-    const updatedCart = await wayagramCartService.updateDeliveryAddress(userId, shopId, deliveryAddress);
-
-    // Return success response
-    return ResponseMessage.success(res,updatedCart , "Delivery address  updated successfully.")
-    
-  } catch (error: any) {
-    return ResponseMessage.error(res,null,'Failed to update delivery address.')
-     
-  }
-};
-
-
-
-export const getDeliveryAddress = async (req: Request, res: Response) => {
-  try {
-    const { shopId } = req.params;
-
-  // Call the service to fetch carts
-    const carts = await wayagramCartService.getDeliveryAddress(shopId);
-
-    return ResponseMessage.success(res,carts,"Carts retrieved successfully.")
-    
-  } catch (error: any) {
-    return ResponseMessage.error(res, null,"Failed to retrieve carts.")
-   
-  }
-};
-
-export const updateDeliveryFeeAndDate = async (req: Request, res: Response) => {
-  try {
-    const { shopId, userId } = req.params;
-    const { deliveryFee, deliveryDate } = req.body;
-
-  
-
-    // Call the service to update delivery fee and date
-    const updatedCart = await wayagramCartService.updateDeliveryFeeAndDate(
-      shopId,
-      userId,
-      deliveryFee,
-      deliveryDate
-    );
-
-    return ResponseMessage.success(res,updatedCart,"Delivery fee and date updated successfully.")
-  
-    
-  } catch (error: any) {
-    return ResponseMessage.error(res,null,"Failed to update delivery fee and date.")
-      
-  }
-};
-
-
-
 
 
 export const incrementProductQuantity = async (req: Request, res: Response) => {
   try {
-    const { userId, shopId, productId } = req.body;
-    const updatedCart = await wayagramCartService.incrementProduct(userId, shopId, productId);
+    const { userId, productId } = req.body;
+    const updatedCart = await wayagramCartService.incrementProduct(userId, productId);
     return ResponseMessage.success(res,updatedCart, "Product quantity incremented") ;
   } catch (error:any) {
     return ResponseMessage.error(res, null , "Failed to increment product quantity");
@@ -124,7 +64,7 @@ export const incrementProductQuantity = async (req: Request, res: Response) => {
 export const decrementProductQuantity = async (req: Request, res: Response) => {
   try {
     const { userId, shopId, productId } = req.body;
-    const updatedCart = await wayagramCartService.decrementProduct(userId, shopId, productId);
+    const updatedCart = await wayagramCartService.decrementProduct(userId, productId);
     return ResponseMessage.success(res,updatedCart, "Product quantity decremented")
   } catch (error:any) {
     return ResponseMessage.error(res, null , "Failed to decrement product quantity");

@@ -34,12 +34,18 @@ export default (sequelize: Sequelize): typeof Cart => {
         type: DataTypes.JSONB,   
         defaultValue: [],
       },
+      deliveryAddress:{
+        type:DataTypes.STRING
+      },
       deliveryFee:{
         type:DataTypes.INTEGER
       },
       deliveryDate:{
         type:DataTypes.DATE
-      }
+      },
+      totalFee:{
+        type:DataTypes.INTEGER
+      },
 
     },
     {

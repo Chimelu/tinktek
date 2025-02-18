@@ -21,18 +21,6 @@ export interface IProduct {
 
 
 
-export interface UpdateProductData {
-  // id: string;
-  categoryId?: string;
-  name?: string;
-  description?: string;
-  price?: number;
-  stockQuantity?: number;
-  productImageFront: string;
-  productImageRight?: string;
-  productImageLeft?: string;
-  productImageBack?: string;
-}
 
 export interface IProductFavorite {
   id: string;

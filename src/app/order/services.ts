@@ -9,8 +9,9 @@ import { any } from "joi";
 class WayagramOrderService {
   private orderRepo: IDataAccessRepo;
   private product: IDataAccessRepo;
-
   private cart: IDataAccessRepo;
+  private paystackSecretKey: string = process.env.PAYSTACK_SECRET_KEY || "";
+
 
 
 
@@ -21,7 +22,7 @@ class WayagramOrderService {
     this.cart = cart;
    
    
-  }
+  } 
 
   /**
    * Places a new order and processes payment.
@@ -29,47 +30,82 @@ class WayagramOrderService {
    * @param token - Authorization token for API calls.
    * @returns Created order.
    */
-  async placeOrder(cartId: string, userId: string, pickupAddress: string, shopId: string,  token: string, ): Promise<any> {
-    // Fetch the cart using cartId and userId
-    const cart = await this.cart.findOne({ id: cartId, userId });
-    if (!cart) throw new Error("Cart not found.");
-  
-    // Find the specific shop items in the cart
-    const shopItems = cart.items.find((item: any) => item.shopId === shopId);
-    if (!shopItems) throw new Error("Shop not found in cart.");
-    console.log(shopItems)
-  
-    // Get the total fee for the shop directly from the cart
-    const totalFee = shopItems.totalFee;
-  
-  
+  async placeOrder(
+    cartId: string,
+    userId: string,
+    pickupAddress: string,
+ 
+    paymentReference: string
+  ): Promise<any> {
+    try {
+      // Fetch the cart using cartId and userId
+      const cart = await this.cart.findOne({ id: cartId, userId });
+      if (!cart) throw new Error("Cart not found.");
 
-    const deliveryToken = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+      
 
-  
-    // Prepare the order data, including the pickupAddress
-    const orderData = {
-      userId,
-   
-      items: shopItems.products.map((product: any) => ({
-        productId: product.productId,
-        quantity: product.quantity,
-        price: product.price,
-      })),
-      deliveryFee: shopItems.deliveryFee,
-      deliveryAddress: shopItems.deliveryAddress,
-      pickupAddress,
-      deliveryToken,  // Include the pickupAddress here
-      deliveryDate: shopItems.deliveryDate,
-      total:totalFee,
-    };
-  
-    // Create the order using the data
-    const newOrder = await this.orderRepo.create(orderData);   
-  
-    // Handle payment if applicable
-    
-    return newOrder;
+      // **Step 1: Verify Payment with Paystack**
+      const isPaymentSuccessful = await this.verifyPaystackPayment(paymentReference, cart.totalFee);
+      if (!isPaymentSuccessful) {
+        throw new Error("Payment verification failed. Order not placed.");
+      }
+
+      // **Step 2: Generate a Unique Delivery Token**
+      const deliveryToken = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+
+      // **Step 3: Prepare the Order Data**
+      const orderData = {
+        userId,
+        items: cart.items.map((product: any) => ({
+          productId: product.productId,
+          quantity: product.quantity,
+          price: product.price,
+        })),
+        deliveryFee: cart.deliveryFee,
+        deliveryAddress:  cart.deliveryAddress,
+        pickupAddress,
+        deliveryToken,
+        deliveryDate: cart.deliveryDate,
+        total: cart.totalFee,
+      };
+
+      // **Step 4: Create the Order**
+      const newOrder = await this.orderRepo.create(orderData);
+
+      return newOrder;
+    } catch (error:any) {
+      console.error("Error placing order:", error);
+      throw new Error(error.message || "Failed to place order.");
+    }
+  }
+
+  /**
+   * Verifies the payment using Paystack API.
+   * @param paymentReference - The transaction reference from Paystack.
+   * @param expectedAmount - The expected amount to be paid (in kobo).
+   * @returns True if the payment is successful, otherwise false.
+   */
+  private async verifyPaystackPayment(paymentReference: string, expectedAmount: number): Promise<boolean> {
+    try {
+      const response = await axios.get(`https://api.paystack.co/transaction/verify/${paymentReference}`, {
+        headers: {
+          Authorization: `Bearer ${this.paystackSecretKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const paymentData = response.data;
+      if (paymentData.status && paymentData.data.status === "success") {
+        // Ensure the amount matches (Paystack amount is in kobo, so we multiply expectedAmount by 100)
+        if (paymentData.data.amount === expectedAmount * 100) {
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error("Paystack verification error:", error);
+      return false;
+    }
   }
   
   
@@ -113,62 +149,7 @@ class WayagramOrderService {
   }
 
 
-  async completeOrder(deliveryToken: string, bearerToken: string): Promise<any> {
-    // Find the order with the matching deliveryToken
-    const order = await this.orderRepo.findOne({ deliveryToken });
-  
-    if (!order) {
-      throw new Error("Invalid delivery token or order not found.");
-    }
-  
-    // Update the statuses based on the presence of a delivery fee
-    if (order.deliveryFee && order.deliveryFee > 0) {
-      order.deliveryStatus = "completed"; // Update deliveryStatus to completed
-    } else {
-      order.pickupStatus = "completed"; // Update pickupStatus to completed
-    }
-  
-    // Update the overall status of the order to completed
-    order.status = "completed";
-  
-    // Save the changes to the database
-    await order.save();
-  
-    // Prepare the settlement payload
-    const settlementPayload = {
-      referenceId: order.orderId, // Use the order ID as the referenceId
-      recipientId: order.vendorId, // Use the vendor ID as the recipientId
-      purpose: "ECOMMERCE", // Settlement purpose
-    };
-  
-    // Call the settlement microservice with Bearer token
-    const settlementResponse = await fetch(
-      "https://services.staging.wayagram.ng/wayagram-wallet/api/v2/client/payment/handle-settlement",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${bearerToken}`, // Add Bearer token
-        },
-        body: JSON.stringify(settlementPayload),
-      }
-    );
-  
-    const settlementResult = await settlementResponse.json();
-  
-    // Check if the settlement was successful
-    if (!settlementResult.status || settlementResult.statusCode !== 200) {
-      throw new Error(
-        `Settlement failed: ${settlementResult.message || "Unknown error"}`
-      );
-    }
-  
-    // Return the updated order and settlement response
-    return {
-      order,
-      settlementMessage: settlementResult.message,
-    };
-  }
+
   
 
   public async getAllOrders(

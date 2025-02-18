@@ -3,6 +3,11 @@ import http from "http";
 import debug from "debug";
 import app from "./infrastructure/app";
 import config from "./infrastructure/config/env.config";
+import { seedRegions } from "./core/models/DeliveryFee/populateDb";
+
+
+
+seedRegions()
 
 const { port, env } = config;
 
@@ -38,6 +43,8 @@ console.log("Environment Check:", {
 
 //   process.exit(1);
 // });
+
+
 
 const server = http.createServer(app);
 

@@ -7,8 +7,7 @@ export interface IOrder {
       price: number;
       name: string;
     }>;
-    shopId: string;
-    vendorId: string;
+  
     deliveryToken: string; 
     total: number;
     status: "pending" | "processing" | "completed" | "cancelled";

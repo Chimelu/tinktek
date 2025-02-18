@@ -56,6 +56,42 @@ export const registerUser = async (req: Request, res: Response) => {
   };
 
 
+  export const resendOtp = async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+  
+      if (!email) {
+        return ResponseMessage.error(res, null, "Email is required.");
+      }
+  
+      const response = await userService.resendOtp(email);
+      return ResponseMessage.success(res, response);
+    } catch (error: any) {
+      console.error("Resend OTP Error:", error);
+      return ResponseMessage.error(res, null, error.message || "An error occurred while resending OTP.");
+    }
+  };
+  
+  /**
+   * Controller to verify OTP
+   */
+  export const verifyOtp = async (req: Request, res: Response) => {
+    try {
+      const { email, otp } = req.body;
+  
+      if (!email || !otp) {
+        return ResponseMessage.error(res, null, "Email and OTP are required.");
+      }
+  
+      const response = await userService.verifyOtp(email, otp);
+      return ResponseMessage.success(res, response);
+    } catch (error: any) {
+      console.error("Verify OTP Error:", error);
+      return ResponseMessage.error(res, null, error.message || "An error occurred while verifying OTP.");
+    }
+  };
+
+
   export const changePassword = async (req: Request, res: Response) => {
     try {
       const { oldPassword, newPassword } = req.body;

@@ -7,7 +7,6 @@ export const createOrderDto = (orderData: any): Partial<IOrder> => {
   if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
     throw new Error("Order must include at least one item.");
   }
-  if (!orderData.shopId) throw new Error("Shop ID is required.");
   if (!orderData.deliveryAddress && !orderData.pickupAddress) {
     throw new Error("Either delivery address or pickup address is required.");
   }
@@ -22,8 +21,7 @@ export const createOrderDto = (orderData: any): Partial<IOrder> => {
       price: parseFloat(item.price) || 0, 
       name: item.name || "Unnamed Product", // Fallback for item name
     })),
-    shopId: orderData.shopId,
-    vendorId: orderData.vendorId,
+  
     deliveryFee: orderData.deliveryFee || "0", // Default delivery fee to 0
     deliveryAddress: orderData.deliveryAddress || "",
     deliveryDate: orderData.deliveryDate ? new Date(orderData.deliveryDate) : null, // Parse delivery date if provided

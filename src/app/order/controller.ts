@@ -39,15 +39,15 @@ export const placeOrder = async (req: Request, res: Response): Promise<Response>
   try {
     // Extract the token from the Authorization header
     const token = req.headers.authorization?.split(" ")[1]; // Assuming the token is in the format 'Bearer <token>'
-    const { cartId, userId, pickupAddress, shopId } = req.body; // Add pickupAddress to the body
-    if (!token) {
-      return ResponseMessage.error(res, null, "Authorization token is required.", 401);
-    }
+    const { cartId, userId, pickupAddress,  paymentReference } = req.body; // Add pickupAddress to the body
+    // if (!token) {
+    //   return ResponseMessage.error(res, null, "Authorization token is required.", 401);
+    // }
 
  
 
     // Pass the token to the order service for payment processing
-    const newOrder = await wayagramOrderService.placeOrder(cartId, userId, pickupAddress, shopId , token ); // Pass object here
+    const newOrder = await wayagramOrderService.placeOrder(cartId, userId, pickupAddress, paymentReference); // Pass object here
 
     return ResponseMessage.success(
       res,
@@ -180,37 +180,7 @@ export const updatePickupStatus = async (req: Request, res: Response): Promise<R
 
 
 
-  export const completeOrder = async (req: Request, res: Response): Promise<Response> => {
-    try {
-      const { deliveryToken } = req.body;
-      const token = req.headers.authorization?.split(" ")[1]; 
-  
-      if (!deliveryToken) {
-        return ResponseMessage.error(res, null, "Delivery token is required.", 400);
-      }
-  
-      const updatedOrder = await wayagramOrderService.completeOrder(deliveryToken,token);
-  
-      if (!updatedOrder) {
-        return ResponseMessage.error(res, null, "Order not found or invalid delivery token.", 404);
-      }
-  
-      return ResponseMessage.success(
-        res,
-        updatedOrder,
-        "Order status updated successfully.",
-        200
-      );
-    } catch (error: any) {
-      console.error(error);
-      return ResponseMessage.error(
-        res,
-        error,
-        error.message || "Failed to complete order.",
-        500
-      );
-    }
-  };
+
 
   
 

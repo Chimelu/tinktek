@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import WayagramProductService from "./services";
+import ProductService from "./services";
 import { RepositoryFactory } from "../../infrastructure/repository-implementation/repository.factory";
 import config from "../../infrastructure/config/env.config";
 import {  Product,Category, ColorModel} from "../../core/models";
@@ -16,22 +16,22 @@ const ColorRepoService: any = RepositoryFactory.setRepository(
   ColorModel,
   DBSource
 );
-const WayagramCategoryRepoService: any = RepositoryFactory.setRepository(
+const CategoryRepoService: any = RepositoryFactory.setRepository(
   dbType,
   Category,
   DBSource
 );
 
 
-const WayagramProductRepoService: any = RepositoryFactory.setRepository(
+const ProductRepoService: any = RepositoryFactory.setRepository(
   dbType,
   Product,
   DBSource
 );
 
-const wayagramProductService = new WayagramProductService(
-  WayagramProductRepoService,
-  WayagramCategoryRepoService,
+const wayagramProductService = new ProductService(
+  ProductRepoService,
+  CategoryRepoService,
   ColorRepoService
 
 );
@@ -102,8 +102,6 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
 
 
-
-
 export const getProductsAdmin = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
@@ -112,6 +110,15 @@ export const getProductsAdmin = async (req: Request, res: Response) => {
   const filters: any = {};
   if (req.query.categoryId) {
     filters.categoryId = req.query.categoryId;
+  }
+  if (req.query.colorId) {
+    filters.colorId = req.query.colorId;
+  }
+  if (req.query.subCategoryId) {
+    filters.subCategoryId = req.query.subCategoryId;
+  }
+  if (req.query.search) {
+    filters.search = req.query.search;
   }
 
 
@@ -122,6 +129,9 @@ export const getProductsAdmin = async (req: Request, res: Response) => {
     return ResponseMessage.error(res, error.message);
   }
 };
+
+
+
 // export const getProductsUser = async (req: Request, res: Response) => {
 //   const page = parseInt(req.query.page as string) || 1;
 //   const limit = parseInt(req.query.limit as string) || 20;
