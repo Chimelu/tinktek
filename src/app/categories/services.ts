@@ -144,24 +144,25 @@ class WayagramCategoryService {
     try {
       const skip = (page - 1) * limit;
   
-      // Build a query object to filter subcategories for the given root category
+      // Query object to filter subcategories
       const query: Record<string, any> = {
         parentCategoryId: rootCategoryId,
         isDeleted: false,
       };
   
-      // Get total count of subcategories matching the query
+      // Get total count of subcategories
       const totalCount = await this.categoryRepo.count(query);
   
-      // Fetch paginated subcategories matching the query
+      // Fetch paginated subcategories
       const subCategories = await this.categoryRepo.find(query, {
         skip,
         limit,
         sort: { createdAt: -1 },
       });
   
+      // If no subcategories, return an empty array
       if (!subCategories || subCategories.length === 0) {
-        throw new NotFoundError("No subcategories found for this root category.");
+        return { data: [] };
       }
   
       // Calculate pagination metadata
@@ -186,6 +187,7 @@ class WayagramCategoryService {
       throw error;
     }
   }
+  
   
   
 

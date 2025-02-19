@@ -38,15 +38,19 @@ export class AddressService {
       const existingAddress = await this.addressRepo.findById( addressId);
       
       if (!existingAddress) throw new NotFoundError('Address not found');
+      console.log(existingAddress.userId)
   
       // If the updated address is set to active, deactivate all other addresses of the user
       if (updatedData.active === true) {
-          await this.addressRepo.updateMany(
-              { userId: existingAddress.userId },  // Query: Find all addresses of the user
-              { active: false },                   // Update: Set active to false
-              { runValidators: true }              // Options: Enforce schema validation
-          );
-      }
+        const updateResult = await this.addressRepo.updateMany(
+            { userId: existingAddress.userId },  // Find all addresses of the user
+            { active: false },                   // Set active to false
+            { runValidators: true }              // Ensure validation is applied
+        );
+    
+        console.log("Updated addresses:", updateResult); // Log the result
+    }
+    
   
       const updatedAddress = await this.addressRepo.updateOne({id:addressId}, updatedData);
       
@@ -67,8 +71,9 @@ export class AddressService {
     public async deleteAddress(addressId: string) {
       // Find the address
       const address = await this.addressRepo.findOne(
-         { id: addressId},
+         { id: addressId,  isDeleted: false},
       );
+      // ({ id, isDeleted: false })
   
       if (!address) {
         throw new Error("address not found or already deleted");

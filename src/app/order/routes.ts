@@ -3,6 +3,7 @@ import { Router } from "express";
 import * as order from "./controller";
 
 import multer from "multer";
+import { authenticateUser } from "../../infrastructure/middleware/authMiddleware";
 
 
 
@@ -12,7 +13,7 @@ const upload = multer();
 
 
 
-OrderRouter.post("/place-order",  order.placeOrder);
+OrderRouter.post("/place-order", authenticateUser,  order.placeOrder);
 OrderRouter.get("/get-orders", order.getAllOrders);
 OrderRouter.put("/deliveryStatus/:orderId",  order.updateDeliveryStatus);
 OrderRouter.put("/pickupStatus/:orderId", order.updatePickupStatus);
@@ -23,6 +24,7 @@ OrderRouter.put("/pickupStatus/:orderId", order.updatePickupStatus);
 
 import axios from "axios";
 import dotenv from "dotenv";
+
 
 dotenv.config();
 

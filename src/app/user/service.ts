@@ -82,8 +82,50 @@ class UserService {
 }
 
 
+public async forgotPassword(email: string) {
+  // Find the user by email
+  const user = await this.userRepo.findOne({ email });
+  if (!user) throw new NotFoundError("User not found");
+
+  // Generate a new 4-digit OTP
+  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+  // Save the OTP to the user record
+  await this.userRepo.updateOne({ id: user.id }, { otp });
+
+  // Send OTP via email
+  await sendEmail(
+      user.email,
+      "Password Reset OTP",
+      `Your password reset code is: ${otp}. It expires in 10 minutes.`
+  );
+
+  return { message: "Password reset OTP sent to email." };
+}
 
 
+public async resetPassword(email: string, otp: string, newPassword: string) {
+  // Find the user by email
+  const user = await this.userRepo.findOne({ email });
+  if (!user) throw new NotFoundError("User not found");
+
+  // Validate OTP
+  if (user.otp !== otp) {
+      throw new UnauthorizedError("Invalid OTP. Please try again.");
+  }
+
+  // Hash the new password
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+  // Update user's password and clear the OTP
+  await this.userRepo.updateOne(
+      { id: user.id }, 
+      { password: hashedPassword, otp: null }
+  );
+
+  return { message: "Password reset successful. You can now log in with your new password." };
+}
 
 
   public async loginUser(email: string, password: string) {
@@ -169,9 +211,6 @@ public async getUsers(
     filters: {},
   });
 }
-
-
-
 
 
 

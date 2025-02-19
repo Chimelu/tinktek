@@ -107,6 +107,40 @@ export const registerUser = async (req: Request, res: Response) => {
   };
 
 
+  export const forgotPassword = async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+  
+      if (!email) {
+        return ResponseMessage.error(res, null, "Email is required.");
+      }
+  
+      const response = await userService.forgotPassword(email);
+      return ResponseMessage.success(res, response);
+    } catch (error: any) {
+      console.error("Forgot Password Error:", error);
+      return ResponseMessage.error(res, null, error.message || "An error occurred while processing your request.");
+    }
+  };
+  
+  export const resetPassword = async (req: Request, res: Response) => {
+    try {
+      const { email, otp, newPassword } = req.body;
+  
+      if (!email || !otp || !newPassword) {
+        return ResponseMessage.error(res, null, "Email, OTP, and new password are required.");
+      }
+  
+      const response = await userService.resetPassword(email, otp, newPassword);
+      return ResponseMessage.success(res, response);
+    } catch (error: any) {
+      console.error("Reset Password Error:", error);
+      return ResponseMessage.error(res, null, error.message || "An error occurred while resetting password.");
+    }
+  };
+  
+
+
   export const updateProfileImage = async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user.id;
