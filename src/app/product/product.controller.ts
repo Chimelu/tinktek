@@ -2,14 +2,19 @@ import { Request, Response } from "express";
 import ProductService from "./services";
 import { RepositoryFactory } from "../../infrastructure/repository-implementation/repository.factory";
 import config from "../../infrastructure/config/env.config";
-import {  Product,Category, ColorModel} from "../../core/models";
+import {  Product,Category, ColorModel,  SizeModel} from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
 
 
 
 const { dbType } = config;
-
+ 
+ const SizeRepoService: any = RepositoryFactory.setRepository(
+   dbType,
+   SizeModel,
+   DBSource
+ );
 
 const ColorRepoService: any = RepositoryFactory.setRepository(
   dbType,
@@ -32,7 +37,8 @@ const ProductRepoService: any = RepositoryFactory.setRepository(
 const wayagramProductService = new ProductService(
   ProductRepoService,
   CategoryRepoService,
-  ColorRepoService
+  ColorRepoService,
+  SizeRepoService
 
 );
 
@@ -113,6 +119,9 @@ export const getProductsAdmin = async (req: Request, res: Response) => {
   }
   if (req.query.colorId) {
     filters.colorId = req.query.colorId;
+  }
+  if (req.query.sizeId) {
+    filters.sizeId = req.query.sizeId;
   }
   if (req.query.subCategoryId) {
     filters.subCategoryId = req.query.subCategoryId;

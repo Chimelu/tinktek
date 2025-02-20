@@ -15,13 +15,15 @@ class ProductService {
   private product: IDataAccessRepo;
   private category: IDataAccessRepo;
   private colorRepo: IDataAccessRepo;
+  private sizeRepo: IDataAccessRepo;
 
 
 
-  constructor(product: IDataAccessRepo, category: IDataAccessRepo, colorRepo: IDataAccessRepo, ) {
+  constructor(product: IDataAccessRepo, category: IDataAccessRepo, colorRepo: IDataAccessRepo, sizeRepo: IDataAccessRepo, ) {
     this.product = product;
     this.category = category;
     this.colorRepo = colorRepo;
+    this.sizeRepo = sizeRepo;
    
    
 }
@@ -170,6 +172,7 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
     PaginationResult<IProduct> & { 
       subCategories?: { id: string; name: string }[]; 
       colors?: { id: string; name: string }[]; 
+      sizes?: { id: string; name: string }[]; 
     }
   > {
     try {
@@ -196,6 +199,12 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
           ? filters.colorId
           : [filters.colorId];
         query.color = { [Op.contains]: colorFilter };
+      }
+      if (filters.sizeId) {
+        const sizeFilter = Array.isArray(filters.sizeId)
+          ? filters.sizeId
+          : [filters.sizeId];
+        query.size = { [Op.contains]: sizeFilter };
       }
   
       // Add filter for subcategory IDs if provided
@@ -284,6 +293,13 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         }
       });
   
+      const allSizeIds = new Set<string>();
+      products.forEach((product: any) => {
+        if (Array.isArray(product.size)) {
+          product.size.forEach((c: string) => allSizeIds.add(c));
+        }
+      });
+  
       let colors: { id: string; name: string }[] | undefined = undefined;
       if (allColorIds.size > 0 && this.colorRepo) {
         const colorIds = Array.from(allColorIds);
@@ -293,6 +309,17 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         colors = colorsData.map((color: any) => ({
           id: color.id,
           name: color.name,
+        }));
+      }
+      let sizes: { id: string; name: string }[] | undefined = undefined;
+      if (allSizeIds.size > 0 && this.sizeRepo) {
+        const sizeIds = Array.from(allSizeIds);
+        // Fetch colors from the color repository
+        const sizesData = await this.sizeRepo.find({ id: { [Op.in]: sizeIds } });
+        // Map each color to an object with id and name
+        sizes = sizesData.map((size: any) => ({
+          id: size.id,
+          name: size.name,
         }));
       }
   
@@ -314,6 +341,7 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         pagingCounter: skip + 1,
         ...(subCategories && { subCategories }),
         ...(colors && { colors }),
+        ...(sizes && { sizes }),
       };
     } catch (error) {
       console.error("Error in getProducts service:", error);
