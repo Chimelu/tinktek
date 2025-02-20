@@ -60,7 +60,7 @@ export class AddressService {
 
   public async getAllAddressesByUserId(userId: string) {
     const addresses = await this.addressRepo.find(
-       { userId },
+       { userId,isDeleted: false },
     );
 
     return addresses.length ? addresses : [];
