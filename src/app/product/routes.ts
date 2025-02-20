@@ -19,6 +19,7 @@ ProductRouter.post(
 
 
 ProductRouter.get("/", product.getProductsAdmin);
+ProductRouter.get("/:productId", product.getProduct);
 // ProductRouter.get("/get", product.getProductsUser);
 
 

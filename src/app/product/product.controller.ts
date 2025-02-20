@@ -105,6 +105,28 @@ export const deleteProduct = async (req: Request, res: Response) => {
     return ResponseMessage.error(res, error.message);
   }
 };
+export const getProduct = async (req: Request, res: Response) => {
+  try {
+    // Extract product ID and shop ID from request parameters
+    const { productId } = req.params;
+
+    // Validate required parameters
+    if (!productId) {
+      return ResponseMessage.error(res, "Product ID is required.");
+    }
+
+    // Call the service to delete the product
+    const result = await wayagramProductService.getProductById(productId);
+
+    // Send a success response
+    return ResponseMessage.success(res, result);
+  } catch (error: any) {
+    // console.error("Error in deleteProduct controller:", error);
+
+    // Send an error response
+    return ResponseMessage.error(res, error.message);
+  }
+};
 
 
 

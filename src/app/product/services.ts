@@ -165,86 +165,41 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
 
   
   public async getProductsAdmin(
-    page: number = 1,
-    limit: number = 20,
+    page: number = 1, 
+    limit: number = 20, 
     filters: any = {}
   ): Promise<
-    PaginationResult<IProduct> & {
-      subCategories?: { id: string; name: string }[];
-      colors?: { id: string; name: string }[];
-      sizes?: { id: string; name: string }[];
+    PaginationResult<IProduct> & { 
+      subCategories?: { id: string; name: string }[]; 
+      colors?: { id: string; name: string }[]; 
+      sizes?: { id: string; name: string }[]; 
     }
   > {
     try {
-      // ✅ Fetch Single Product if ID is Provided
-      if (filters.id) {
-        const product = await this.product.findOne({ id: filters.id });
-  
-        if (!product) {
-          throw new Error("Product not found");
-        }
-  
-        // ✅ Fetch Category Names
-        const categoryNames = await Promise.all(
-          (product.categoryId || []).map(async (catId: string) => {
-            const category = await this.category.findOne({ id: catId });
-            return category ? category.name : "Unknown";
-          })
-        );
-  
-        // ✅ Fetch Color Names
-        let colorNames: string[] = [];
-        if (product.color && product.color.length > 0) {
-          const colors = await this.colorRepo.find({ id: { [Op.in]: product.color } });
-          colorNames = colors.map((color: any) => color.name);
-        }
-  
-        // ✅ Fetch Size Names
-        let sizeNames: string[] = [];
-        if (product.size && product.size.length > 0) {
-          const sizes = await this.sizeRepo.find({ id: { [Op.in]: product.size } });
-          sizeNames = sizes.map((size: any) => size.name);
-        }
-  
-        return {
-          docs: [
-            {
-              ...product.dataValues,
-              categoryNames,
-              colorNames, // Array of color names
-              sizeNames, // Array of size names
-            },
-          ],
-          totalDocs: 1,
-          limit: 1,
-          page: 1,
-          totalPages: 1,
-          hasNextPage: false,
-          nextPage: null,
-          hasPrevPage: false,
-          prevPage: null,
-          pagingCounter: 1,
-        };
-      }
-  
-      // 🔄 Existing Pagination Logic
       const skip = (page - 1) * limit;
-      const query: any = { isDeleted: false };
   
+      // Base query object to filter products
+      const query: any = {
+        isDeleted: false,
+        // approve: true,
+      };
+  
+      // If a category filter is provided, use Sequelize's array operator
       if (filters.categoryId) {
+        // If filters.categoryId is a single string, wrap it in an array
         const categoryFilter = Array.isArray(filters.categoryId)
           ? filters.categoryId
           : [filters.categoryId];
         query.categoryId = { [Op.contains]: categoryFilter };
       }
   
+      // Add filter for color IDs if provided
       if (filters.colorId) {
         const colorFilter = Array.isArray(filters.colorId)
           ? filters.colorId
           : [filters.colorId];
         query.color = { [Op.contains]: colorFilter };
       }
-  
       if (filters.sizeId) {
         const sizeFilter = Array.isArray(filters.sizeId)
           ? filters.sizeId
@@ -252,7 +207,21 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         query.size = { [Op.contains]: sizeFilter };
       }
   
+      // Add filter for subcategory IDs if provided
+      if (filters.subCategoryId) {
+        const subCategoryFilter = Array.isArray(filters.subCategoryId)
+          ? filters.subCategoryId
+          : [filters.subCategoryId];
+        // If category filter already exists, merge with an AND condition; otherwise, just set it.
+        query.categoryId = query.categoryId
+          ? { [Op.and]: [ query.categoryId, { [Op.contains]: subCategoryFilter } ] }
+          : { [Op.contains]: subCategoryFilter };
+      }
+  
+      // Get the total count of products matching the query
       const totalCount = await this.product.count(query);
+  
+      // Fetch paginated products matching the query
       const products = await this.product.find(query, {
         skip,
         limit,
@@ -274,50 +243,87 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         };
       }
   
+      // Extract category IDs from all products (flatten the arrays)
       const categoryIds = products.reduce((acc: string[], product: any) => {
         if (Array.isArray(product.categoryId)) {
           return acc.concat(product.categoryId);
         }
         return acc;
       }, []);
-  
       const uniqueCategoryIds = [...new Set(categoryIds)];
-      const categories = await this.category.find({ id: { [Op.in]: uniqueCategoryIds } });
   
+      // Fetch category details for these IDs
+      const categories = await this.category.find({ 
+        id: { [Op.in]: uniqueCategoryIds }
+      });
+  
+      // Create a map of categoryId to category details for quick lookup
       const categoryDetailsMap = categories.reduce((map: Record<string, any>, category: any) => {
         map[category.id] = { name: category.name };
         return map;
       }, {});
   
-      const productsWithDetails = await Promise.all(
-        products.map(async (product: any) => {
-          const categoryNames = (product.categoryId || []).map((catId: string) => {
-            return categoryDetailsMap[catId]?.name || "Unknown";
-          });
+      // Merge category names into each product object
+      const productsWithDetails = products.map((product: any) => {
+        // Map each category ID in product.categoryId to its name
+        const categoryNames = (product.categoryId || []).map((catId: string) => {
+          return categoryDetailsMap[catId]?.name || "Unknown";
+        });
+        return {
+          ...product.dataValues,
+          categoryNames, // Array of category names
+        };
+      });
   
-          // Fetch color names
-          let colorNames: string[] = [];
-          if (product.color && product.color.length > 0) {
-            const colors = await this.colorRepo.find({ id: { [Op.in]: product.color } });
-            colorNames = colors.map((color: any) => color.name);
-          }
+      // If a category filter is provided, fetch subcategories
+      let subCategories: { id: string; name: string }[] | undefined = undefined;
+      if (filters.categoryId) {
+        subCategories = await this.category.find({ parentCategoryId: filters.categoryId });
+        subCategories = subCategories.map((cat: any) => ({
+          id: cat.id,
+          name: cat.name,
+        }));
+      }
   
-          // Fetch size names
-          let sizeNames: string[] = [];
-          if (product.size && product.size.length > 0) {
-            const sizes = await this.sizeRepo.find({ id: { [Op.in]: product.size } });
-            sizeNames = sizes.map((size: any) => size.name);
-          }
+      // Gather color IDs from the matching products
+      const allColorIds = new Set<string>();
+      products.forEach((product: any) => {
+        if (Array.isArray(product.color)) {
+          product.color.forEach((c: string) => allColorIds.add(c));
+        }
+      });
   
-          return {
-            ...product.dataValues,
-            categoryNames,
-            colorNames,
-            sizeNames,
-          };
-        })
-      );
+      const allSizeIds = new Set<string>();
+      products.forEach((product: any) => {
+        if (Array.isArray(product.size)) {
+          product.size.forEach((c: string) => allSizeIds.add(c));
+        }
+      });
   
+      let colors: { id: string; name: string }[] | undefined = undefined;
+      if (allColorIds.size > 0 && this.colorRepo) {
+        const colorIds = Array.from(allColorIds);
+        // Fetch colors from the color repository
+        const colorsData = await this.colorRepo.find({ id: { [Op.in]: colorIds } });
+        // Map each color to an object with id and name
+        colors = colorsData.map((color: any) => ({
+          id: color.id,
+          name: color.name,
+        }));
+      }
+      let sizes: { id: string; name: string }[] | undefined = undefined;
+      if (allSizeIds.size > 0 && this.sizeRepo) {
+        const sizeIds = Array.from(allSizeIds);
+        // Fetch colors from the color repository
+        const sizesData = await this.sizeRepo.find({ id: { [Op.in]: sizeIds } });
+        // Map each color to an object with id and name
+        sizes = sizesData.map((size: any) => ({
+          id: size.id,
+          name: size.name,
+        }));
+      }
+  
+      // Calculate pagination metadata
       const totalPages = Math.ceil(totalCount / limit);
       const hasNextPage = page < totalPages;
       const hasPreviousPage = page > 1;
@@ -333,9 +339,61 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         hasPrevPage: hasPreviousPage,
         prevPage: hasPreviousPage ? page - 1 : null,
         pagingCounter: skip + 1,
+        ...(subCategories && { subCategories }),
+        ...(colors && { colors }),
+        ...(sizes && { sizes }),
       };
     } catch (error) {
       console.error("Error in getProducts service:", error);
+      throw error;
+    }
+  }
+
+
+  public async getProductById(id: string): Promise<IProduct | null> {
+    try {
+      if (!id) {
+        throw new Error("Product ID is required");
+      }
+  
+      // Fetch the product by ID
+      const product = await this.product.findOne({ id });
+  
+      if (!product) {
+        throw new Error("Product not found");
+      }
+  
+      // ✅ Fetch Category Names
+      const categoryNames = await Promise.all(
+        (product.categoryId || []).map(async (catId: string) => {
+          const category = await this.category.findOne({ id: catId });
+          return category ? category.name : "Unknown";
+        })
+      );
+  
+      // ✅ Fetch Color Names
+      let colorNames: string[] = [];
+      if (product.color && product.color.length > 0) {
+        const colors = await this.colorRepo.find({ id: { [Op.in]: product.color } });
+        colorNames = colors.map((color: any) => color.name);
+      }
+  
+      // ✅ Fetch Size Names
+      let sizeNames: string[] = [];
+      if (product.size && product.size.length > 0) {
+        const sizes = await this.sizeRepo.find({ id: { [Op.in]: product.size } });
+        sizeNames = sizes.map((size: any) => size.name);
+      }
+  
+      // ✅ Return structured product data
+      return {
+        ...product.dataValues,
+        categoryNames, // Array of category names
+        colorNames, // Array of color names
+        sizeNames, // Array of size names
+      };
+    } catch (error) {
+      console.error("Error in getProductById service:", error);
       throw error;
     }
   }
