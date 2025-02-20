@@ -33,7 +33,7 @@ export const DBSource = new Sequelize({
   logging: false, 
 });
 
-const SequelizeMigration = async () => {
+const SequelizeMigration = async () => {   
   const schemas = require("../../core/models");
 
   Object.keys(schemas).forEach((modelName) => {

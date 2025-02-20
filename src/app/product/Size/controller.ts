@@ -35,3 +35,17 @@ export const createSize = async (req: Request, res: Response) => {
   }
   
 };
+
+
+export const getAllSizes = async (req: Request, res: Response) => {
+  try {
+    // Call the service to fetch all sizes
+    const sizes = await sizeService.getAllSizes();
+
+    // Return success response
+    return ResponseMessage.success(res, sizes);
+  } catch (error: any) {
+    console.error("Error fetching sizes:", error);
+    return ResponseMessage.error(res, null, error.message || "An unexpected error occurred.");
+  }
+};

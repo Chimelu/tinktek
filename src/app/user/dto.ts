@@ -12,6 +12,7 @@ export const createUserDto = (data: any): Partial<IUser> => {
     phoneNumber: data.phoneNumber,
     country:data.country,
     password: data.password,
+    role:data.role
   };
 };
 export const updateUserDto = (data: any): Partial<IUser> => {

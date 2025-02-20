@@ -26,6 +26,10 @@ export class ColorService {
   
     return newColor;
   }
+
+  public async getAllColors() {
+    return await this.colorRepo.find({}); // Fetch all colors from DB
+  }
   
   
 }

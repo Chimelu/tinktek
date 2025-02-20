@@ -26,6 +26,13 @@ export class SizeService {
   
     return newSize;
   }
+
+
+  public async getAllSizes() {
+    return await this.sizeRepo.find({}); // Fetch all sizes from DB
+  }
+
+
   
   
   

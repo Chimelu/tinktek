@@ -12,6 +12,7 @@ const schema = Joi.object({
   PORT: Joi.number().required(),
 
 
+
   // DBCONFIG
   DB_TYPE: Joi.string().required().description("DB type"),
   DB_HOST: Joi.string().required().description("DB instance url"),
@@ -20,6 +21,7 @@ const schema = Joi.object({
   DB_PASSWORD: Joi.string().required().description("DB connection password"),
   DB_DATABASE: Joi.string().required().description("Db title"),
   SECRET: Joi.string().required().description("Session secret"),
+  ADMIN_EMAILS: Joi.string().required().description("Session secret"),
 
 
 
@@ -54,6 +56,7 @@ const config = {
   apiKey: env.API_KEY,
 	apiSecret: env.API_SECRET,
 	cloudName: env.CLOUD_NAME,
+  adminEmails:env.ADMIN_EMAILS
   
 
 

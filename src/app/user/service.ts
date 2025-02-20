@@ -59,7 +59,7 @@ class UserService {
     );
 
     return { message: "OTP resent successfully. Check your email." };
-  }
+  }   
 
 
   public async verifyOtp(email: string, otp: string) {

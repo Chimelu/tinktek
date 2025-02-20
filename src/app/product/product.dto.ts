@@ -13,13 +13,6 @@ export const createProductDto = (productData: any): Partial<IProduct> => {
     throw new Error("Category ID is required and cannot be empty.");
   }
   
-  // if (
-  //   !productData.images ||
-  //   !Array.isArray(productData.images) ||
-  //   productData.images.length === 0
-  // ) {
-  //   throw new Error("At least one image is required.");
-  // }
 
   return {
     name: productData.name,

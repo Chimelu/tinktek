@@ -36,3 +36,19 @@ export const createColor = async (req: Request, res: Response) => {
   
 };
 
+
+export const getAllColors = async (req: Request, res: Response) => {
+  try {
+    // Call the service to fetch all sizes
+    const colors = await colorService.getAllColors();
+
+    // Return success response
+    return ResponseMessage.success(res, colors);
+  } catch (error: any) {
+    console.error("Error fetching sizes:", error);
+    return ResponseMessage.error(res, null, error.message || "An unexpected error occurred.");
+  }
+};
+
+
+

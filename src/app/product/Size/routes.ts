@@ -10,6 +10,7 @@ const SizeRouter = Router();
 
 
 SizeRouter.post("/create",Size.createSize);
+SizeRouter.get("/get",Size.getAllSizes);  
 
 
 
