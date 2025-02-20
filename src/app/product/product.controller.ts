@@ -114,6 +114,9 @@ export const getProductsAdmin = async (req: Request, res: Response) => {
 
   // Collect filter parameters from query
   const filters: any = {};
+  if (req.query.id) {
+    filters.id = req.query.id; // Fetch single product if ID is provided
+  }
   if (req.query.categoryId) {
     filters.categoryId = req.query.categoryId;
   }
@@ -129,7 +132,6 @@ export const getProductsAdmin = async (req: Request, res: Response) => {
   if (req.query.search) {
     filters.search = req.query.search;
   }
-
 
   try {
     const data = await wayagramProductService.getProductsAdmin(page, limit, filters);
