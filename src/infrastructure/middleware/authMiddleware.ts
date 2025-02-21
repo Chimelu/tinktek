@@ -44,6 +44,36 @@ export const authenticateUser = async (req: AuthenticatedRequest, res: Response,
   }
 };
 
+
+
+// 🔐 Middleware to Extract User Data without Auth
+export const userExtractor = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    
+    if (!token) {
+      return next(); // ✅ If no token, allow access without attaching user
+    }
+
+    // Verify JWT token
+    const decoded: any = jwt.verify(token, secret);
+    const user = await UserRepoService.findOne({ id: decoded.id });
+
+    if (!user) {
+      return next(); // ✅ If user doesn't exist, proceed without user info
+    }
+
+    req.user = { id: user.id, role: user.role }; // ✅ Attach user info
+  } catch (error) {
+    console.error("Error in userExtractor:", error);
+    // Do NOT call `next()` again if an error occurs
+  }
+  next(); // ✅ Ensure `next()` is only called once at the end
+};
+
+
+
+
 // 🔐 Middleware to Enforce Role-Based Access Control (RBAC)
 export const authorizeRoles = (...allowedRoles: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

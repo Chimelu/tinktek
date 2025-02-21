@@ -8,7 +8,7 @@ import { createProductDto, updateProductDto, } from "./product.dto";
 import { Product } from "../../core/models";
 import { Op } from 'sequelize';
 import cloudinary from "../../infrastructure/uploads/cloudinaryUpload";
-import { IProduct } from "../../core/entity/product.entity";
+import { IProduct, IProductFavorite } from "../../core/entity/product.entity";
 
 
 class ProductService {
@@ -16,18 +16,21 @@ class ProductService {
   private category: IDataAccessRepo;
   private colorRepo: IDataAccessRepo;
   private sizeRepo: IDataAccessRepo;
+  private favoriteRepo: IDataAccessRepo;
+  private cartRepo: IDataAccessRepo;
 
 
 
-  constructor(product: IDataAccessRepo, category: IDataAccessRepo, colorRepo: IDataAccessRepo, sizeRepo: IDataAccessRepo, ) {
+
+  constructor(product: IDataAccessRepo, category: IDataAccessRepo, colorRepo: IDataAccessRepo, sizeRepo: IDataAccessRepo, favoriteRepo: IDataAccessRepo, cartRepo: IDataAccessRepo ) {
     this.product = product;
     this.category = category;
     this.colorRepo = colorRepo;
     this.sizeRepo = sizeRepo;
-   
+    this.favoriteRepo = favoriteRepo;
+    this.cartRepo = cartRepo;
    
 }
-
 
 
 
@@ -353,7 +356,7 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
 
 
 
-  public async getOrganisedProducts(page: number = 1, limit: number = 20, keyword: string) {
+  public async getOrganisedProducts(page: number = 1, limit: number = 20, keyword: string, userId?: string) {
     try {
         const skip = (page - 1) * limit;
         // Base query object to filter products
@@ -385,9 +388,33 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         // Get total count for pagination
         const totalDocs = await this.product.find.length;
         const totalPages = Math.ceil(totalDocs / limit);
+        let completeProduct = null;
+
+        if (userId) {
+          console.log("User ID:", userId);
+
+          // Fetch user's favorite products
+          const totalFav = await this.favoriteRepo.find({ userId });
+
+          // Fetch user's cart (Only 1 cart per user, so we use `findOne`)
+          const userCart = await this.cartRepo.findOne({ userId });
+
+          // Create a Set of favorite product IDs for quick lookup
+          const favoriteProductIds = new Set(totalFav.map((fav: any) => fav.productId));
+
+          // Extract product IDs from the user's cart items
+          const cartProductIds = new Set(userCart?.items.map((item: any) => item.productId) || []);
+
+          // Add `isFavorite` and `isCarted` fields to each product
+          completeProduct = products.map((product: any) => ({
+              ...product.dataValues,
+              isFavorite: favoriteProductIds.has(product.id),
+              isCarted: cartProductIds.has(product.id),
+          }));
+      }
 
         return {
-            docs: products,
+            docs: userId ? completeProduct : products,
             totalDocs,
             limit,
             page,

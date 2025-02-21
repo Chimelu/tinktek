@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import * as product from "./product.controller";
+import { userExtractor } from "../../infrastructure/middleware/authMiddleware";
 
 
 const ProductRouter = Router();
@@ -19,7 +20,7 @@ ProductRouter.post(
 
 
 // GET /products/admin/:keyword (latest, best-sellers, recommended)
-ProductRouter.get("/organised/:keyword", product.getOrganisedProducts);
+ProductRouter.get("/organised/:keyword", userExtractor, product.getOrganisedProducts);
 
 
 ProductRouter.get("/", product.getProductsAdmin);
