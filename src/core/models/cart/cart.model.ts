@@ -11,9 +11,11 @@ class Cart extends Model implements ICart {
       color:string
       size:string
     }>;
+  public  deliveryOption:"delivery" | "pickup";
   public  deliveryFee:number
   public  deliveryDate:Date
   public deliveryAddress:string
+  public pickupAddress:string
   public totalFee:number   
 
 }
@@ -34,8 +36,16 @@ export default (sequelize: Sequelize): typeof Cart => {
         type: DataTypes.JSONB,   
         defaultValue: [],
       },
+      deliveryOption:{
+        type: DataTypes.ENUM("delivery", "pickup"),
+        defaultValue: "delivery",
+      },
       deliveryAddress:{
         type:DataTypes.STRING
+      },
+      pickUpAddress:{
+        type:DataTypes.STRING,
+        defaultValue: "Joseph expensive store lagos",
       },
       deliveryFee:{
         type:DataTypes.INTEGER

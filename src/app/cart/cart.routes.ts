@@ -9,7 +9,7 @@ const CartRouter = Router();
 
 CartRouter.post(
   "/add-to-cart",
-  authenticateUser,
+  // authenticateUser,
 
   cart.addToCart
 );
@@ -24,9 +24,14 @@ CartRouter.patch(
   authenticateUser,
   cart.decrementProductQuantity
 );
+CartRouter.put(
+  "/delivery-option/:cartId",
+  // authenticateUser,
+  cart.updateDeliveryOption
+);
 CartRouter.get(
   "/:userId",
-  authenticateUser,
+  // authenticateUser,
   cart.getUserCart
 );
 

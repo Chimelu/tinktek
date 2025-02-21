@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { RepositoryFactory } from "../../infrastructure/repository-implementation/repository.factory";
 import config from "../../infrastructure/config/env.config";
-import { Product, Cart} from "../../core/models";
+import { Product, Cart, RegionModel, AddressModel} from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
 import WayagramProductService from "../product/services";
@@ -9,6 +9,11 @@ import { CartService } from "./cart.services";
 import { AddToCartDTO } from "./cart.dto";
 
 const { dbType } = config;
+const AddressRepoService: any = RepositoryFactory.setRepository(
+  dbType,
+  AddressModel,
+  DBSource
+);
 
 const WayagramProductRepoService: any = RepositoryFactory.setRepository(
     dbType,
@@ -17,6 +22,11 @@ const WayagramProductRepoService: any = RepositoryFactory.setRepository(
   );
 
 ;
+const DeliveryRepoService: any = RepositoryFactory.setRepository(
+  dbType,
+  RegionModel,
+  DBSource
+);
 
 // Initialize repositories and services
 const wayagramCartRepoService: any = RepositoryFactory.setRepository(
@@ -24,13 +34,8 @@ const wayagramCartRepoService: any = RepositoryFactory.setRepository(
   Cart,
   DBSource
 );
-const wayagramCartService = new CartService(wayagramCartRepoService,WayagramProductRepoService);
+const wayagramCartService = new CartService(wayagramCartRepoService,WayagramProductRepoService,DeliveryRepoService,AddressRepoService);
 
-const wayaGramProductRepoService: any = RepositoryFactory.setRepository(
-  dbType,
-  Product,
-  DBSource  
-);
 
 
 export const addToCart = async (req: Request, res: Response): Promise<Response> => {
@@ -63,11 +68,27 @@ export const incrementProductQuantity = async (req: Request, res: Response) => {
 
 export const decrementProductQuantity = async (req: Request, res: Response) => {
   try {
-    const { userId, shopId, productId } = req.body;
+    const { userId,  productId } = req.body;
     const updatedCart = await wayagramCartService.decrementProduct(userId, productId);
     return ResponseMessage.success(res,updatedCart, "Product quantity decremented")
   } catch (error:any) {
     return ResponseMessage.error(res, null , "Failed to decrement product quantity");
+  }
+};
+
+
+export const updateDeliveryOption = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { cartId } = req.params;
+    const { deliveryOption } = req.body;
+
+    // Call the service method
+    const result = await wayagramCartService.updateDeliveryOption(cartId, deliveryOption);
+
+    // Return success response
+    return ResponseMessage.success(res, result);
+  } catch (error: any) {
+    return ResponseMessage.error(res, null, error.message || "Failed to update delivery option");
   }
 };
 

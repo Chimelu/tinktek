@@ -13,5 +13,7 @@ export interface ICart {
   deliveryFee: number;
   deliveryDate: Date;
   deliveryAddress: string;
+  pickupAddress: string;
+  deliveryOption:"delivery" | "pickup";
   totalFee: number;
 }
