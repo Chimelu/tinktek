@@ -1,7 +1,8 @@
 import { Sequelize } from "sequelize";
 import config from "../config/env.config";
+import e from "cors";
 
-const { database, password, username, dbPort, dbhost } = config;
+const { database, password, username, dbPort, dbhost, env } = config;
 
 type Models = {
   [key: string]: {
@@ -23,14 +24,8 @@ export const DBSource = new Sequelize({
     acquire: 60000,
     idle: 10000,
   },
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  },
-
-  logging: false, 
+  dialectOptions: env!=="development" ? { ssl: { require: true, rejectUnauthorized: false } } : {}, // ✅ Dynamic SSL
+  logging: false,
 });
 
 const SequelizeMigration = async () => {   

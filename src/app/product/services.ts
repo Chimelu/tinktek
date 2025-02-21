@@ -29,6 +29,8 @@ class ProductService {
 }
 
 
+
+
 public async createProduct(productData: any, images: Express.Multer.File[]) {
   // Validate and format product data using the DTO
   const productDto = createProductDto(productData);
@@ -348,6 +350,63 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
       throw error;
     }
   }
+
+
+
+  public async getOrganisedProducts(page: number = 1, limit: number = 20, keyword: string) {
+    try {
+        const skip = (page - 1) * limit;
+        // Base query object to filter products
+        const query: any = {
+          isDeleted: false,
+          // approve: true,
+        };
+        let order: any = [];
+
+        // Sorting logic
+        if (keyword === "latest") {
+            order = [["createdAt", "DESC"]]; // Newest first
+        } else if (keyword === "best-sellers") {
+            order = [["price", "ASC"]]; // Lowest price first
+        }
+
+        // Fetch products using repository
+        let products = await this.product.find(query, {
+          skip,
+          limit,
+          sort: { createdAt: -1 },
+        });
+
+        // If "recommended", shuffle results
+        if (keyword === "recommended") {
+            products = products.sort(() => Math.random() - 0.5);
+        }
+
+        // Get total count for pagination
+        const totalDocs = await this.product.find.length;
+        const totalPages = Math.ceil(totalDocs / limit);
+
+        return {
+            docs: products,
+            totalDocs,
+            limit,
+            page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            nextPage: page < totalPages ? page + 1 : null,
+            hasPrevPage: page > 1,
+            prevPage: page > 1 ? page - 1 : null,
+            pagingCounter: skip + 1,
+        };
+
+    } catch (error) {
+        console.error("Error in getOrganisedProducts service:", error);
+        throw error;
+    }
+}
+
+
+
 
 
   public async getProductById(id: string): Promise<IProduct | null> {
