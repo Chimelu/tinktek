@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import ProductService from "./services";
 import { RepositoryFactory } from "../../infrastructure/repository-implementation/repository.factory";
 import config from "../../infrastructure/config/env.config";
-import {  Product,Category, ColorModel,  SizeModel} from "../../core/models";
+import {  Product,Category, ColorModel,  SizeModel, Favorite, Cart} from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
+import { AuthenticatedRequest } from "../../infrastructure/middleware/authMiddleware";
+import logger from "../../infrastructure/logger/logger";
 
 
 
@@ -34,12 +36,25 @@ export const ProductRepoService: any = RepositoryFactory.setRepository(
   DBSource
 );
 
+export const favoriteRepoService: any = RepositoryFactory.setRepository(
+  dbType,
+  Favorite,
+  DBSource
+);
+
+export const cartRepoService: any = RepositoryFactory.setRepository(
+  dbType,
+  Cart,
+  DBSource
+);
+
 const wayagramProductService = new ProductService(
   ProductRepoService,
   CategoryRepoService,
   ColorRepoService,
-  SizeRepoService
-
+  SizeRepoService,
+  favoriteRepoService,
+  cartRepoService
 );
 
 
@@ -165,13 +180,16 @@ export const getProductsAdmin = async (req: Request, res: Response) => {
 
 
 
-export const getOrganisedProducts = async (req: Request, res: Response) => {
+export const getOrganisedProducts = async (req: AuthenticatedRequest, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
+  const authenticatedUser = req?.user;
+  const userId = authenticatedUser?.id;
   const { keyword } = req.params; // Extract keyword from URL parameter
 
+
   try {
-    const data = await wayagramProductService.getOrganisedProducts(page, limit, keyword);
+    const data = await wayagramProductService.getOrganisedProducts(page, limit, keyword, userId);
     return ResponseMessage.success(res, data);
   } catch (error: any) {
     return ResponseMessage.error(res, error.message);
