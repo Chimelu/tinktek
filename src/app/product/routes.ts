@@ -18,6 +18,10 @@ ProductRouter.post(
 );
 
 
+// GET /products/admin/:keyword (latest, best-sellers, recommended)
+ProductRouter.get("/organised/:keyword", product.getOrganisedProducts);
+
+
 ProductRouter.get("/", product.getProductsAdmin);
 ProductRouter.get("/:productId", product.getProduct);
 // ProductRouter.get("/get", product.getProductsUser);

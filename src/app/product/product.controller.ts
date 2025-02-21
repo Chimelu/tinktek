@@ -28,7 +28,7 @@ const CategoryRepoService: any = RepositoryFactory.setRepository(
 );
 
 
-const ProductRepoService: any = RepositoryFactory.setRepository(
+export const ProductRepoService: any = RepositoryFactory.setRepository(
   dbType,
   Product,
   DBSource
@@ -162,6 +162,22 @@ export const getProductsAdmin = async (req: Request, res: Response) => {
     return ResponseMessage.error(res, error.message);
   }
 };
+
+
+
+export const getOrganisedProducts = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const { keyword } = req.params; // Extract keyword from URL parameter
+
+  try {
+    const data = await wayagramProductService.getOrganisedProducts(page, limit, keyword);
+    return ResponseMessage.success(res, data);
+  } catch (error: any) {
+    return ResponseMessage.error(res, error.message);
+  }
+};
+
 
 
 
