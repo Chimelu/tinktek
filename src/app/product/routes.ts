@@ -19,7 +19,7 @@ ProductRouter.post(
 );
 
 
-// GET /products/admin/:keyword (latest, best-sellers, recommended)
+// GET /products/admin/:keyword (latest, best-sellers, recommended, lowest-price, highest-price)
 ProductRouter.get("/organised/:keyword", userExtractor, product.getOrganisedProducts);
 
 
