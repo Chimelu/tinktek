@@ -171,7 +171,8 @@ class WayagramProductFavoriteService {
             const favorite = favorites.find((f) => f.productId === product.id);
 
             return {
-                id: product.id,
+                id: favorite.id,
+                productId: product.id,
                 categoryId: product.categoryId,
                 name: product.name,
                 description: product.description,
