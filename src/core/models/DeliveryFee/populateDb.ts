@@ -21,17 +21,22 @@ const regionsData = [
   { country: "South Africa", region: "Western Cape", deliveryFee: 880 },
 ];
 
-// Function to seed database
 export const seedRegions = async () => {
   try {
     for (const data of regionsData) {
-      await RegionModel.upsert(data); // Ensures no duplicates
+      const existingRegion = await RegionModel.findOne({
+        where: { country: data.country, region: data.region },
+      });
+
+      if (!existingRegion) {
+        await RegionModel.create(data); // Only insert if it doesn't exist
+      }
     }
-    console.log("Regions seeded successfully.");
+    console.log("Regions seeded successfully.");  
   } catch (error) {
-    console.error("Error seeding regions:", error);
   }
 };
+
 
 
 

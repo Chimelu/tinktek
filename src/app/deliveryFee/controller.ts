@@ -20,18 +20,44 @@ const deliveryService = new DeliveryFeeService(
 );
 
 
-// export const createSize = async (req: Request, res: Response) => {
-//   try {
-//     // Include file in the payload
+export const getAllDekiveryFee = async (req: Request, res: Response) => {
+  try {
+  
  
 
-//     // Call the service to create a category
-//     const newSize = await sizeService.createSize(req.body);
+    // Call the service to create a category
+    const newSize = await deliveryService.getAllDeliveryFee();
 
-//     return ResponseMessage.success(res, newSize);
-//   }catch (error: any) {
-//     console.error(error);
-//     return ResponseMessage.error(res,null, error.message || "An unexpected error occurred.");
-//   }
+    return ResponseMessage.success(res, newSize);
+  }catch (error: any) {
+    console.error(error);
+    return ResponseMessage.error(res,null, error.message || "An unexpected error occurred.");
+  }
   
-// };
+};
+export const editdeliveryFee = async (req: Request, res: Response) => {
+  try {
+  
+ 
+
+    // Call the service to create a category
+    const newSize = await deliveryService.getAllDeliveryFee();
+
+    return ResponseMessage.success(res, newSize);
+  }catch (error: any) {
+    console.error(error);
+    return ResponseMessage.error(res,null, error.message || "An unexpected error occurred.");
+  }
+  
+};
+
+export const deleteAllDeliveryFees = async (req: Request, res: Response) => {
+    try {
+      const result = await deliveryService.deleteAllDeliveryFees();
+      
+      return ResponseMessage.success(res, result, "All delivery fees deleted successfully.");
+    } catch (error: any) {
+      console.error("Error deleting delivery fees:", error);
+      return ResponseMessage.error(res, null, error.message || "An error occurred while deleting delivery fees.");
+    }
+  };

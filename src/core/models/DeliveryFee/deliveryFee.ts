@@ -23,12 +23,13 @@ export default (sequelize: Sequelize): typeof Region => {
       region: {
         type: DataTypes.STRING,
         allowNull: false,
+        // unique:true
       },
       deliveryFee: {
         type: DataTypes.FLOAT,
         allowNull: false,
       },
-    },
+    },  
     {
       sequelize,
       modelName: "Region",
@@ -37,5 +38,7 @@ export default (sequelize: Sequelize): typeof Region => {
     }
   );
 
+  // Region.sync({ force: true });
   return Region;
+  
 };

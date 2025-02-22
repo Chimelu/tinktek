@@ -13,6 +13,7 @@ import ColorRouter from "./product/Color/routes";
 import SizeRouter from "./product/Size/routes";
 import AddressRouter from "./shippingAddress/routes";
 import FavoritesRouter from "./favourites/favorites.routes";
+import DeliveryFeeRouter from "./deliveryFee/routes";
 
 const AppRouter: any = Router();   
 
@@ -37,6 +38,7 @@ AppRouter.use("/address", AddressRouter);
 AppRouter.use("/favorites", FavoritesRouter);
 AppRouter.use("/cart", CartRouter);
 AppRouter.use("/orders", OrderRouter);
+AppRouter.use("/deliveryFee", DeliveryFeeRouter);
 
 
 
