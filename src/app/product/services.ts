@@ -370,7 +370,7 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
         if (keyword === "latest") {
             order = [["createdAt", "DESC"]]; // Newest first
         } else if (keyword === "best-sellers") {
-            order = [["price", "ASC"]]; // Lowest price first
+            order = [["price", "DESC"]]; // Highest price first
         }
 
         // Fetch products using repository
