@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import WayagramProductFavoriteService from "./favorites.services";
 import { RepositoryFactory } from "../../infrastructure/repository-implementation/repository.factory";
 import config from "../../infrastructure/config/env.config";
-import {  Product, Favorite, Cart } from "../../core/models";
+import {  Product, Favorite, Cart, SizeModel, ColorModel } from "../../core/models";
 import { DBSource } from "../../infrastructure/database/sqldb.database";
 import ResponseMessage from "../../infrastructure/responseHandler/response.handler";
 import {
@@ -27,11 +27,31 @@ const wayagramProductFavoriteService: any = RepositoryFactory.setRepository(
   DBSource
 );
 
+const wayagramCartRepoService: any = RepositoryFactory.setRepository(
+  dbType,
+  Cart,
+  DBSource
+);
 
+
+ const wayagramSizeRepoService: any = RepositoryFactory.setRepository(
+   dbType,
+   SizeModel,
+   DBSource
+ );
+
+const wayagramColorRepoService: any = RepositoryFactory.setRepository(
+  dbType,
+  ColorModel,
+  DBSource
+);
 
 const wayagramFavouriteService = new WayagramProductFavoriteService(
   WayagramProductRepoService,
-  wayagramProductFavoriteService
+  wayagramProductFavoriteService,
+  wayagramCartRepoService,
+  wayagramColorRepoService,
+  wayagramSizeRepoService
 );
 
 
