@@ -25,6 +25,7 @@ export const updateUserDto = (data: any): Partial<IUser> => {
     lastName: data.lastName, 
     phoneNumber: data.phoneNumber,
     country:data.country,
+    email: data.email,
 
   };
 };
