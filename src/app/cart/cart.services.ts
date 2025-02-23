@@ -157,33 +157,45 @@ async getUserCart(userId: string) {
     return {
       userId,
       items: [] as any,
+      deliveryFee: 0,
+      total: 0,
+      deliveryOption: null as any,
+      pickupAddress: null as any,
+      shippingRegion: null as any,
     };
   }
 
   // 1️⃣ Fetch the user's active shipping address
-  const shippingAddress = await this.addressRepo.findOne(
-     { userId, active: true, isDeleted: false },
-  );
+  const shippingAddress = await this.addressRepo.findOne({
+    userId,
+    active: true,
+    isDeleted: false,
+  });
 
-
-  await this.cartRepo.updateOne({ id: cart.id }, {  deliveryAddress: shippingAddress.address} );
-
-  let deliveryFee = cart.deliveryFee || null; // Default to cart's delivery fee
-
-  // 2️⃣ If delivery option is "delivery", match region to delivery fee
-  if (cart.deliveryOption === "delivery" && shippingAddress?.region) {
-    const deliveryFeeEntry = await this.deliveryFeeRepo.findOne(
-      { region: shippingAddress.region },
+  if (shippingAddress) {
+    await this.cartRepo.updateOne(
+      { id: cart.id },
+      { deliveryAddress: shippingAddress.address }
     );
-    // console.log(deliveryFeeEntry)
+  }
+
+  let deliveryFee = cart.deliveryFee ?? 0; // Default to existing cart fee or 0
+
+  // 2️⃣ If user has an address & selected "delivery", calculate delivery fee
+  if (shippingAddress && cart.deliveryOption === "delivery" && shippingAddress.region) {
+    const deliveryFeeEntry = await this.deliveryFeeRepo.findOne({
+      region: shippingAddress.region,
+    });
 
     if (deliveryFeeEntry) {
       deliveryFee = deliveryFeeEntry.deliveryFee;
-      console.log("Retrieved Delivery Fee:", deliveryFeeEntry?.deliveryFee);
+      console.log("Retrieved Delivery Fee:", deliveryFee);
 
-      // console.log(deliveryFeeEntry)
-      // 3️⃣ Update the cart's delivery fee
-      await this.cartRepo.updateOne({ id: cart.id },  deliveryFee );
+      // 3️⃣ Update cart's delivery fee
+      await this.cartRepo.updateOne(
+        { id: cart.id },
+        { deliveryFee } // Correct update syntax
+      );
     }
   }
 
@@ -191,21 +203,19 @@ async getUserCart(userId: string) {
   const populatedItems = await Promise.all(
     cart.items.map(async (item: any) => {
       try {
-        const productDetails = await this.productRepo.findOne(
-           { id: item.productId },
-        );
+        const productDetails = await this.productRepo.findOne({
+          id: item.productId,
+        });
 
-        if (!productDetails) {
-          return null;
-        }
+        if (!productDetails) return null;
 
         return {
           ...item,
           productName: productDetails.name,
-          productImage:
-            productDetails.images.length > 0 ? productDetails.images[0] : null,
+          productImage: productDetails.images.length > 0 ? productDetails.images[0] : null,
         };
       } catch (error) {
+        console.error("Error fetching product:", error);
         return null;
       }
     })
@@ -214,15 +224,15 @@ async getUserCart(userId: string) {
   return {
     id: cart.id,
     userId: cart.userId,
-    items: populatedItems.filter(Boolean),
-    deliveryFee: cart.deliveryFee ?? 0, // Ensure deliveryFee is never null
+    items: populatedItems.filter(Boolean), // Remove null entries
+    deliveryFee,
     deliveryOption: cart.deliveryOption,
     pickupAddress: cart.pickUpAddress,
-    total: cart.totalFee + (cart.deliveryFee ?? 0), // Default deliveryFee to 0 if null
-    shippingRegion: cart?.deliveryAddress || null, // Include region in response
+    total: cart.totalFee + deliveryFee,
+    shippingRegion: shippingAddress?.region || null, // Include only if address exists
   };
-  
 }
+
 
 
 
