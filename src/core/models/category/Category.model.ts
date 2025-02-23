@@ -31,12 +31,12 @@ export default (sequelize: Sequelize): typeof Category => {
       name: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+      
       },
       image: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
+      
       },
       description: {
         type: DataTypes.TEXT,

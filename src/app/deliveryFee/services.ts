@@ -29,7 +29,7 @@ export class DeliveryFeeService {
                          // Ensure validation is applied
           );
       
-          console.log("Updated addresses:", updateResult); // Log the result
+      
       
         
         return updateResult;

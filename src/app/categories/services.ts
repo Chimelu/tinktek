@@ -56,7 +56,7 @@ class WayagramCategoryService {
       const totalCount = await this.categoryRepo.count({});
   
       // Fetch paginated categories
-      const categories = await this.categoryRepo.find({}, {
+      const categories = await this.categoryRepo.find({isDeleted:false}, {
         skip,
         limit,
         sort: { createdAt: -1 }, // Sorting categories by creation date
@@ -202,7 +202,7 @@ class WayagramCategoryService {
         const { buffer, mimetype } = updateData.imageFile;
         const base64Image = `data:${mimetype};base64,${buffer.toString("base64")}`;
   
-        // Upload to Cloudinary
+        // Upload to Cloudinary  
         const uploadResult = await cloudinary.uploader.upload(base64Image, {
           folder: "category-images",
           resource_type: "image",

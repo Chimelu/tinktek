@@ -38,10 +38,8 @@ export const getAllDekiveryFee = async (req: Request, res: Response) => {
 export const editdeliveryFee = async (req: Request, res: Response) => {
   try {
   
- 
-
-    // Call the service to create a category
-    const newSize = await deliveryService.getAllDeliveryFee();
+    // Call the service to edit delivery fee
+    const newSize = await deliveryService.editdeliveryFee(req.params.id, req.body);
 
     return ResponseMessage.success(res, newSize);
   }catch (error: any) {

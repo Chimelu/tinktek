@@ -33,7 +33,7 @@ class WayagramOrderService {
   async placeOrder(
     cartId: string,
     userId: string,
-    pickupAddress: string,
+ 
  
     paymentReference: string
   ): Promise<any> {
@@ -63,7 +63,6 @@ class WayagramOrderService {
         })),
         deliveryFee: cart.deliveryFee,
         deliveryAddress:  cart.deliveryAddress,
-        pickupAddress,
         deliveryToken,
         deliveryDate: cart.deliveryDate,
         total: cart.totalFee,
@@ -79,12 +78,6 @@ class WayagramOrderService {
     }
   }
 
-  /**
-   * Verifies the payment using Paystack API.
-   * @param paymentReference - The transaction reference from Paystack.
-   * @param expectedAmount - The expected amount to be paid (in kobo).
-   * @returns True if the payment is successful, otherwise false.
-   */
   private async verifyPaystackPayment(paymentReference: string, expectedAmount: number): Promise<boolean> {
     try {
       const response = await axios.get(`https://api.paystack.co/transaction/verify/${paymentReference}`, {
