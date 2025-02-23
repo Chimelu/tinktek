@@ -170,9 +170,17 @@ class WayagramProductFavoriteService {
         .map((product) => {
             const favorite = favorites.find((f) => f.productId === product.id);
 
+    const colorNames= colors
+    ?.filter((color) => product.color.includes(color.id))
+    .map((el) => el.name)
+
+    const sizeNames = sizes
+    ?.filter((size) => product.size.includes(size.id))
+    .map((el) => el.name)
+
             return {
-                id: favorite.id,
-                productId: product.id,
+                id: product.id,
+                favoriteId: favorite?.id || "",
                 categoryId: product.categoryId,
                 name: product.name,
                 description: product.description,
@@ -187,10 +195,9 @@ class WayagramProductFavoriteService {
                 isDeleted: product.isDeleted,
                 createdAt: product.createdAt,
                 updatedAt: product.updatedAt,
-                favoriteId: favorite?.id || "",
                 isCarted: cartProductIds.has(product.id),
-                ...(colors && { colorNames: colors.map((el,i)=> el.name,) }),
-                ...(sizes && { sizeNames: sizes.map((el,i)=> el.name,)  }),
+                colorNames,
+                sizeNames,
             };
         });
 

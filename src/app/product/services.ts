@@ -364,21 +364,29 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
           isDeleted: false,
           // approve: true,
         };
-        let order: any = [];
 
         // Sorting logic
+        let sort: Record<string, number> = { createdAt: -1 }; // Default: latest first
+
         if (keyword === "latest") {
-            order = [["createdAt", "DESC"]]; // Newest first
-        } else if (keyword === "best-sellers") {
-            order = [["price", "ASC"]]; // Lowest price first
+            sort = { createdAt: -1 }; // Sort by date count descending
+          } else if (keyword === "best-sellers") {
+              sort = { price: -1 }; // Most expensive first
+        } else if (keyword === "lowest-price") {
+            sort = { price: 1 }; // Cheapest first
+        } else if (keyword === "highest-price") {
+            sort = { price: -1 }; // Most expensive first
         }
 
-        // Fetch products using repository
+        // Fetch products using repository with sorting
         let products = await this.product.find(query, {
-          skip,
-          limit,
-          sort: { createdAt: -1 },
-        });
+          sort: sort,  // ✅ Pass sorting options here
+          skip: skip,
+          limit: limit
+      });
+      
+
+
 
         // If "recommended", shuffle results
         if (keyword === "recommended") {
