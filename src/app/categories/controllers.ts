@@ -73,9 +73,14 @@ export const getParentCategories = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
 
+  const filters = {
+    categoryName: req.query.categoryName as string,
+  };
+
+
   try {
     // Fetch only root categories (categories with no parent)
-    const data = await wayagramCategoryService.getParentCategories(page, limit);
+    const data = await wayagramCategoryService.getParentCategories(page, limit, filters);
     return ResponseMessage.success(res, data);
   } catch (error: any) {
     console.error("Error fetching root categories:", error);

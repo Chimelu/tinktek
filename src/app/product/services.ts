@@ -356,6 +356,11 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
 
 
 
+
+
+
+
+
   public async getOrganisedProducts(page: number = 1, limit: number = 20, keyword: string, userId?: string) {
     try {
         const skip = (page - 1) * limit;
@@ -473,11 +478,14 @@ public async getSearchProducts(
 
         if (categories.length > 0) {
           const categoryIds = categories.map(cat => cat.id);
+          const categoryNames = categories.map(cat => cat.name);
           query.categoryId = { [Op.contains]: categoryIds }; // Ensuring products match category
+          query.categoryNames = { [Op.contains]: categoryNames }; // Ensuring products match category
         } else {
           return { docs: [] as IProduct[], totalDocs: 0, limit, page, totalPages: 0 };
         }
       }
+
 
       // Fetch products with pagination
       let products = await this.product.find(query, { skip, limit });

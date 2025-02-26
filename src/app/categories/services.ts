@@ -89,7 +89,11 @@ class WayagramCategoryService {
     }
   }
 
-  public async getParentCategories(page: number = 1, limit: number = 20) {
+  public async getParentCategories(
+    page: number = 1, 
+    limit: number = 20,
+    filters: { categoryName?: string; } = {}
+  ) {
     try {
       const skip = (page - 1) * limit;
   
@@ -97,7 +101,12 @@ class WayagramCategoryService {
       const query: any = {
         parentCategoryId: null,
         isDeleted: false,
-      };
+      };     
+      
+      // Search by category name (case-insensitive, partial match)
+      if (filters.categoryName) {
+      query.name = { [Op.iLike]: `%${filters.categoryName}%` }; // Use name field
+      }
   
       // Get total count for pagination metadata
       const totalCount = await this.categoryRepo.count(query);
