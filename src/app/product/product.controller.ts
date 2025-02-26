@@ -195,6 +195,28 @@ export const getOrganisedProducts = async (req: AuthenticatedRequest, res: Respo
     return ResponseMessage.error(res, error.message);
   }
 };
+   
+
+
+export const getSearchProducts = async (req: AuthenticatedRequest, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const authenticatedUser = req?.user;
+  const userId = authenticatedUser?.id;
+  const { keyword } = req.params; // Extract keyword from URL parameter
+
+  const filters = {
+    productName: req.query.productName as string,
+    categoryName: req.query.categoryName as string,
+  };
+
+  try {
+    const data = await wayagramProductService.getSearchProducts(page, limit, userId, filters);
+    return ResponseMessage.success(res, data);
+  } catch (error: any) {
+    return ResponseMessage.error(res, error.message);
+  }
+};
 
 
 

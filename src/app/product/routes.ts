@@ -21,6 +21,7 @@ ProductRouter.post(
 
 // GET /products/admin/:keyword (latest, best-sellers, recommended, lowest-price, highest-price)
 ProductRouter.get("/organised/:keyword", userExtractor, product.getOrganisedProducts);
+ProductRouter.get("/search", userExtractor, product.getSearchProducts);
 
 
 ProductRouter.get("/", product.getProductsAdmin);

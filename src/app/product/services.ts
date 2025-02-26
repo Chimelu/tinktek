@@ -444,6 +444,89 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
 
 
 
+
+public async getSearchProducts(
+  page: number = 1, 
+  limit: number = 20, 
+  userId?: string, 
+  filters: { productName?: string; categoryName?: string; } = {}
+) {
+  try {
+      const skip = (page - 1) * limit;
+
+      // Base query object to filter products
+      const query: any = {
+        isDeleted: false,
+      };
+
+      // Search by product name (case-insensitive, partial match)
+      if (filters.productName) {
+        query.name = { [Op.iLike]: `%${filters.productName}%` }; // For SQL (PostgreSQL, MySQL)
+        // query.name = new RegExp(filters.productName, "i"); // For MongoDB
+      }
+
+      // Search by category name (case-insensitive, partial match)
+      if (filters.categoryName) {
+        const categories = await this.category.find({ 
+          name: { [Op.iLike]: `%${filters.categoryName}%` } // SQL
+        });
+
+        if (categories.length > 0) {
+          const categoryIds = categories.map(cat => cat.id);
+          query.categoryId = { [Op.contains]: categoryIds }; // Ensuring products match category
+        } else {
+          return { docs: [] as IProduct[], totalDocs: 0, limit, page, totalPages: 0 };
+        }
+      }
+
+      // Fetch products with pagination
+      let products = await this.product.find(query, { skip, limit });
+
+      // Get total count for pagination
+      const totalDocs = await this.product.count(query);
+      const totalPages = Math.ceil(totalDocs / limit);
+
+      let completeProduct = products;
+
+      // If user ID is provided, check for favorites & cart items
+      if (userId) {
+        const totalFav = await this.favoriteRepo.find({ userId });
+        const userCart = await this.cartRepo.findOne({ userId });
+
+        const favoriteProductIds = new Set(totalFav.map((fav: any) => fav.productId));
+        const cartProductIds = new Set(userCart?.items.map((item: any) => item.productId) || []);
+
+        completeProduct = products.map((product: any) => ({
+          ...product.dataValues,
+          isFavorite: favoriteProductIds.has(product.id),
+          isCarted: cartProductIds.has(product.id),
+        }));
+      }
+
+      return {
+          docs: userId ? completeProduct : products,
+          totalDocs,
+          limit,
+          page,
+          totalPages,
+          hasNextPage: page < totalPages,
+          nextPage: page < totalPages ? page + 1 : null,
+          hasPrevPage: page > 1,
+          prevPage: page > 1 ? page - 1 : null,
+          pagingCounter: skip + 1,
+      };
+
+  } catch (error) {
+      console.error("Error in getSearchProducts service:", error);
+      throw error;
+  }
+}
+
+
+
+
+
+
   public async getProductById(id: string): Promise<IProduct | null> {
     try {
       if (!id) {
