@@ -472,13 +472,13 @@ public async getSearchProducts(
 
       // Search by category name (case-insensitive, partial match)
       if (filters.categoryName) {
-        const categories = await this.category.find({
-          name: { [Op.iLike]: `%${filters.categoryName}%` } // ✅ Proper filtering for find
+        const categories = await this.category.find({ 
+          name: { [Op.iLike]: `%${filters.categoryName}%` } // SQL
         });
-      
+
         if (categories.length > 0) {
           const categoryIds = categories.map(cat => cat.id);
-          query.categoryId = { [Op.overlap]: categoryIds }; // ✅ Correct way to filter an array of categoryIds
+          query.categoryId = { [Op.contains]: categoryIds }; // Ensuring products match category
         } else {
           return { docs: [] as IProduct[], totalDocs: 0, limit, page, totalPages: 0 };
         }
@@ -487,31 +487,11 @@ public async getSearchProducts(
       // Fetch products with pagination
       let products = await this.product.find(query, { skip, limit });
 
-      if (products.length === 0) {
-        return { docs: [], totalDocs: 0, limit, page, totalPages: 0 };
-      }
-
-      // Extract all category IDs from the products
-      const allCategoryIds = [...new Set(products.flatMap(p => p.categoryId))];
-
-      // Fetch category names
-      const categoryMap: { [key: string]: string } = {};
-      if (allCategoryIds.length > 0) {
-        const categoryData = await this.category.find({ id: { [Op.in]: allCategoryIds } });
-        categoryData.forEach(cat => categoryMap[cat.id] = cat.name);
-      }
-
-      // Add categoryNames to each product
-      const productsWithCategories = products.map(product => ({
-        ...product.dataValues,
-        categoryNames: product.categoryId.map((catId: string) => categoryMap[catId] || "Unknown")
-      }));
-
       // Get total count for pagination
       const totalDocs = await this.product.count(query);
       const totalPages = Math.ceil(totalDocs / limit);
 
-      let completeProduct = productsWithCategories;
+      let completeProduct = products;
 
       // If user ID is provided, check for favorites & cart items
       if (userId) {
@@ -521,7 +501,7 @@ public async getSearchProducts(
         const favoriteProductIds = new Set(totalFav.map((fav: any) => fav.productId));
         const cartProductIds = new Set(userCart?.items.map((item: any) => item.productId) || []);
 
-        completeProduct = productsWithCategories.map((product: any) => ({
+        completeProduct = products.map((product: any) => ({
           ...product.dataValues,
           isFavorite: favoriteProductIds.has(product.id),
           isCarted: cartProductIds.has(product.id),
@@ -529,7 +509,7 @@ public async getSearchProducts(
       }
 
       return {
-          docs: completeProduct,
+          docs: userId ? completeProduct : products,
           totalDocs,
           limit,
           page,
