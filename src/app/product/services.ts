@@ -358,7 +358,7 @@ public async createProduct(productData: any, images: Express.Multer.File[]) {
 
 
 
-
+  
 
 
   public async getOrganisedProducts(page: number = 1, limit: number = 20, keyword: string, userId?: string) {
@@ -472,29 +472,46 @@ public async getSearchProducts(
 
       // Search by category name (case-insensitive, partial match)
       if (filters.categoryName) {
-        const categories = await this.category.find({ 
-          name: { [Op.iLike]: `%${filters.categoryName}%` } // SQL
+        const categories = await this.category.find({
+          name: { [Op.iLike]: `%${filters.categoryName}%` } // ✅ Proper filtering for find
         });
-
+      
         if (categories.length > 0) {
           const categoryIds = categories.map(cat => cat.id);
-          const categoryNames = categories.map(cat => cat.name);
-          query.categoryId = { [Op.contains]: categoryIds }; // Ensuring products match category
-          query.categoryNames = { [Op.contains]: categoryNames }; // Ensuring products match category
+          query.categoryId = { [Op.overlap]: categoryIds }; // ✅ Correct way to filter an array of categoryIds
         } else {
           return { docs: [] as IProduct[], totalDocs: 0, limit, page, totalPages: 0 };
         }
       }
 
-
       // Fetch products with pagination
       let products = await this.product.find(query, { skip, limit });
+
+      if (products.length === 0) {
+        return { docs: [], totalDocs: 0, limit, page, totalPages: 0 };
+      }
+
+      // Extract all category IDs from the products
+      const allCategoryIds = [...new Set(products.flatMap(p => p.categoryId))];
+
+      // Fetch category names
+      const categoryMap: { [key: string]: string } = {};
+      if (allCategoryIds.length > 0) {
+        const categoryData = await this.category.find({ id: { [Op.in]: allCategoryIds } });
+        categoryData.forEach(cat => categoryMap[cat.id] = cat.name);
+      }
+
+      // Add categoryNames to each product
+      const productsWithCategories = products.map(product => ({
+        ...product.dataValues,
+        categoryNames: product.categoryId.map((catId: string) => categoryMap[catId] || "Unknown")
+      }));
 
       // Get total count for pagination
       const totalDocs = await this.product.count(query);
       const totalPages = Math.ceil(totalDocs / limit);
 
-      let completeProduct = products;
+      let completeProduct = productsWithCategories;
 
       // If user ID is provided, check for favorites & cart items
       if (userId) {
@@ -504,7 +521,7 @@ public async getSearchProducts(
         const favoriteProductIds = new Set(totalFav.map((fav: any) => fav.productId));
         const cartProductIds = new Set(userCart?.items.map((item: any) => item.productId) || []);
 
-        completeProduct = products.map((product: any) => ({
+        completeProduct = productsWithCategories.map((product: any) => ({
           ...product.dataValues,
           isFavorite: favoriteProductIds.has(product.id),
           isCarted: cartProductIds.has(product.id),
@@ -512,7 +529,7 @@ public async getSearchProducts(
       }
 
       return {
-          docs: userId ? completeProduct : products,
+          docs: completeProduct,
           totalDocs,
           limit,
           page,
