@@ -60,7 +60,7 @@ export const placeOrder = async (req: Request, res: Response): Promise<Response>
     return ResponseMessage.error(
       res,
       error,
-      error.message || "Failed to place order.",
+      `${error.message}, retry` || "Failed to place order.",
       400
     );
   }
