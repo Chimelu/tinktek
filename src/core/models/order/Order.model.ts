@@ -11,9 +11,11 @@ class Order extends Model<IOrder, OrderCreationAttributes> implements IOrder {
   public userId!: string;
   public items!: Array<{
     productId: string;
+    name: string;
     quantity: number;
     price: number;
-    name: string;
+    color: string;
+    size: string;
   }>;
 
   public total!: number;

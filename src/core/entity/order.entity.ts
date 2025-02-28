@@ -3,9 +3,11 @@ export interface IOrder {
     userId: string;
     items: Array<{
       productId: string;
+      name: string;
       quantity: number;
       price: number;
-      name: string;
+      color: string;
+      size: string;
     }>;
   
     deliveryToken: string; 
