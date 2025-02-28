@@ -218,6 +218,9 @@ class WayagramOrderService {
           const productDetails = productDetailsMap[item.productId] || { image: null };
           return {
             ...item,
+            name: productDetails.name,
+            color: productDetails?.colorNames[0],
+            size: productDetails?.sizeNames[0],
             productImage: productDetails.image,
           };
         });
