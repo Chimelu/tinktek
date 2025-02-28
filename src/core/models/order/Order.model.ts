@@ -17,7 +17,8 @@ class Order extends Model<IOrder, OrderCreationAttributes> implements IOrder {
   }>;
 
   public total!: number;
-  public status!: "pending" | "processing" | "completed" | "cancelled";
+  // public status!: "pending" | "processing" | "completed" | "cancelled";
+  public status!: "pending" | "delivered" | "cancelled";
   public pickupAddress!: string | null;
   public pickupStatus!: "pending" | "readyForPickUp" | "pickUpScheduled" | "completed";
   public deliveryAddress!: string | null;

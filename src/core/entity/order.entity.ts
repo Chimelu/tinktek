@@ -10,7 +10,8 @@ export interface IOrder {
   
     deliveryToken: string; 
     total: number;
-    status: "pending" | "processing" | "completed" | "cancelled";
+    // status: "pending" | "processing" | "completed" | "cancelled";
+    status: "pending" | "delivered" | "cancelled";
     pickupAddress?: string | null;
     pickupStatus?: "pending" | "readyForPickUp" | "pickUpScheduled" | "completed";
     deliveryAddress?: string | null;
