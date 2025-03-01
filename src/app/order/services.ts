@@ -222,6 +222,7 @@ class WayagramOrderService {
           return {
             ...item,
             productImage: productDetails.image,
+            productName: productDetails.name,
           };
         });
   
