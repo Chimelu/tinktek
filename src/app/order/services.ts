@@ -209,7 +209,7 @@ class WayagramOrderService {
   
       const productDetailsMap = products.reduce((map: Record<string, any>, product: any) => {
         const firstImage = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null;
-        map[product.id] = { image: firstImage };
+        map[product.id] = { image: firstImage, name: product.name };
         return map;
       }, {});
       
