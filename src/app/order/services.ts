@@ -58,6 +58,9 @@ class WayagramOrderService {
         userId,
         items: cart.items.map((product: any) => ({
           productId: product.productId,
+          name: product.productName,
+          color: product.color,
+          size: product.size,
           quantity: product.quantity,
           price: product.price,
         })),
