@@ -126,6 +126,34 @@ export class CartService {
   }
   
 
+  async removeFromCart(userId: string, productId: string, size?: string, color?: string) {
+    // Fetch the user's cart
+    const cart = await this.cartRepo.findOne({ userId });
+    if (!cart) throw new NotFoundError("Cart not found");
+  
+    // Filter out the product that matches productId, size, and color
+    const updatedItems = cart.items.filter(
+      (item: any) =>
+        !(item.productId === productId &&
+          (!size || item.size === size) &&
+          (!color || item.color === color))
+    );
+  
+    // If no items remain, you may choose to delete the cart or leave it empty
+    if (updatedItems.length === 0) {
+      await this.cartRepo.deleteOne({ userId });
+      return { message: "Cart is now empty and has been removed." };
+    }
+  
+    // Recalculate total fee
+    const totalFee = updatedItems.reduce((sum: number, item: any) => sum + item.price, 0);
+  
+    // Update the cart with the new items and total fee
+    await this.cartRepo.updateOne({ userId }, { items: updatedItems, totalFee });
+  
+    return { message: "Product removed successfully", totalFee };
+  }
+
 
   public async updateDeliveryOption(cartId: string, deliveryOption: "delivery" | "pickup") {
     // Find the cart by ID

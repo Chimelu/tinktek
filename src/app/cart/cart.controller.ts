@@ -75,7 +75,16 @@ export const decrementProductQuantity = async (req: Request, res: Response) => {
     return ResponseMessage.error(res, null , "Failed to decrement product quantity");
   }
 };
-
+export const removeProduct = async (req: Request, res: Response) => {
+  try {
+    const { userId,  productId } = req.body;
+    const updatedCart = await wayagramCartService.removeFromCart(userId, productId);
+    return ResponseMessage.success(res,updatedCart, "Product deleted")
+  } catch (error:any) {
+    return ResponseMessage.error(res, null , "Failed to delete poduct");
+  }
+};
+ 
 
 export const updateDeliveryOption = async (req: Request, res: Response): Promise<Response> => {
   try {
