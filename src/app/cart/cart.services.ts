@@ -137,13 +137,47 @@ export class CartService {
       throw new BadRequestError("Invalid delivery option. Must be 'delivery' or 'pickup'.");
     }
   
-    // Update the cart's delivery option
+    let deliveryFee = 0; // Default delivery fee for pickup is 0
+  
+    if (deliveryOption === "delivery") {
+      // Fetch the user's active shipping address
+      const shippingAddress = await this.addressRepo.findOne({
+        userId: cart.userId,
+        active: true,
+        isDeleted: false,
+      });
+  
+      if (!shippingAddress) {
+        throw new BadRequestError("No active shipping address found for delivery.");
+      }
+  
+      // Fetch the delivery fee based on the user's region
+      const deliveryFeeEntry = await this.deliveryFeeRepo.findOne({
+        region: shippingAddress.region,
+      });
+  
+      if (!deliveryFeeEntry) {
+        throw new BadRequestError("No delivery fee found for the selected region.");
+      }
+  
+      deliveryFee = deliveryFeeEntry.deliveryFee;
+    }
+  
+    // Calculate the new total fee
+    const totalFee = cart.items.reduce((sum:any, item:any) => sum + item.price * item.quantity, 0) + deliveryFee;
+  
+    // Update the cart's delivery option, delivery fee, and total fee
     await this.cartRepo.updateOne(
       { id: cart.id },
-      { deliveryOption }
+      { deliveryOption, deliveryFee, totalFee }
     );
   
-    return { message: "Delivery option updated successfully", deliveryOption };
+    return { 
+      message: "Delivery option updated successfully", 
+      deliveryOption, 
+      deliveryFee,
+      totalFee
+    };
   }
   
 
@@ -151,6 +185,7 @@ export class CartService {
 
 // Fetch user cart
 async getUserCart(userId: string) {
+  // Fetch user cart
   const cart = await this.cartRepo.findOne({ userId });
 
   if (!cart) {
@@ -172,34 +207,39 @@ async getUserCart(userId: string) {
     isDeleted: false,
   });
 
+  let deliveryFee = 0; // Default delivery fee
+
   if (shippingAddress) {
+    // Update cart's delivery address
     await this.cartRepo.updateOne(
       { id: cart.id },
       { deliveryAddress: shippingAddress.address }
     );
-  }
 
-  let deliveryFee = cart.deliveryFee ?? 0; // Default to existing cart fee or 0
+    // 2️⃣ If user has an address & selected "delivery", fetch delivery fee
+    if (cart.deliveryOption === "delivery" && shippingAddress.region) {
+      const deliveryFeeEntry = await this.deliveryFeeRepo.findOne({
+        region: shippingAddress.region,
+      });
 
-  // 2️⃣ If user has an address & selected "delivery", calculate delivery fee
-  if (shippingAddress && cart.deliveryOption === "delivery" && shippingAddress.region) {
-    const deliveryFeeEntry = await this.deliveryFeeRepo.findOne({
-      region: shippingAddress.region,
-    });
-
-    if (deliveryFeeEntry) {
-      deliveryFee = deliveryFeeEntry.deliveryFee;
-      console.log("Retrieved Delivery Fee:", deliveryFee);
-
-      // 3️⃣ Update cart's delivery fee
-      await this.cartRepo.updateOne(
-        { id: cart.id },
-        { deliveryFee } // Correct update syntax
-      );
+      if (deliveryFeeEntry) {
+        deliveryFee = deliveryFeeEntry.deliveryFee;
+        console.log("Retrieved Delivery Fee:", deliveryFee);
+      }
     }
   }
 
-  // 4️⃣ Populate product details
+  // 3️⃣ Calculate total fee (products total + delivery fee)
+  const productTotal = cart.items.reduce((sum:any, item:any) => sum + item.price * item.quantity, 0);
+  const totalFee = productTotal + deliveryFee;
+
+  // 4️⃣ Update the cart's delivery fee and total fee
+  await this.cartRepo.updateOne(
+    { id: cart.id },
+    { deliveryFee, totalFee }
+  );
+
+  // 5️⃣ Populate product details
   const populatedItems = await Promise.all(
     cart.items.map(async (item: any) => {
       try {
@@ -226,10 +266,10 @@ async getUserCart(userId: string) {
     userId: cart.userId,
     items: populatedItems.filter(Boolean), // Remove null entries
     deliveryFee,
+    total: totalFee,
     deliveryOption: cart.deliveryOption,
     pickupAddress: cart.pickUpAddress,
-    total: cart.totalFee + deliveryFee,
-    shippingRegion: shippingAddress?.region || null, // Include only if address exists
+    shippingRegion: shippingAddress?.region || null, // Include if address exists
   };
 }
 
