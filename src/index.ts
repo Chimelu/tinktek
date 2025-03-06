@@ -54,12 +54,10 @@ server.listen(port, () => {
 });
 
 // 🔥 **CRON JOB TO KEEP SERVER AWAKE**
-cron.schedule("*/5 * * * *", async () => {
+cron.schedule("*/13 * * * *", async () => {
   try {
-    const serverUrl = `https://tinktek.onrender.com/api/v1`; // Change this to your actual server URL
-    console.log(`Pinging server: ${serverUrl}`);
+    const serverUrl = `https://tinktek.onrender.com/api/v1`;
     await axios.get(serverUrl);
-    console.log("Server is active ✅");
   } catch (error:any) {
     console.error("Error keeping server awake:", error.message);
   }
