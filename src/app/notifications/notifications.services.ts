@@ -6,10 +6,12 @@ import user from "../../core/models/user/user";
 import { v4 as uuidValidate, V4Options } from "uuid";
 import { NotFoundError } from "../../infrastructure/errorHandler/error";
 
-const APP_ID = parseFloat(process.env.NOTIFY_APP_ID); // Has to be a number type
-const APP_TOKEN = process.env.NOTIFY_APP_TOKEN;
-const BASE_URL = process.env.NOTIFY_BASE_URL;
-const BASE_URL_INDIVIDUAL = process.env.NOTIFY_BASE_URL_INDIVIDUAL;
+const APP_ID = parseFloat(process.env.NOTIFY_APP_ID) || 27995; // Has to be a number type
+const APP_TOKEN = process.env.NOTIFY_APP_TOKEN || "PtmXxjsFaYDchVzwxLwoUB";
+const BASE_URL = process.env.NOTIFY_BASE_URL || "https://app.nativenotify.com/api/notification";
+const BASE_URL_INDIVIDUAL = process.env.NOTIFY_BASE_URL_INDIVIDUAL || "https://app.nativenotify.com/api/indie/notification";
+
+
 
 export class NotificationService {
   constructor(
