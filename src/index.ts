@@ -14,11 +14,13 @@ const { port, env } = config;
 const DEBUG = debug("dev");
 app.disable("x-powered-by");
 
+if(process.env.NODE_ENV === "production"){ // runs only on production
 console.log("Environment Check:", {
   NODE_ENV: process.env.NODE_ENV,
-  isProd: process.env.NODE_ENV === "production",
+  isProd: process.env.NODE_ENV !== "production",
   envKeys: Object.keys(process.env).filter((key) => key.includes("TOKEN")),
-});
+});}
+
 
 // app.use(security);
 
