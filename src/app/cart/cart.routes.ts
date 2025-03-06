@@ -19,6 +19,11 @@ CartRouter.patch(
   authenticateUser,
   cart.incrementProductQuantity
 );
+CartRouter.delete(
+  "/remove-product",
+  // authenticateUser,
+  cart.removeProduct
+);
 CartRouter.patch(
   "/decrease-quantity",
   authenticateUser,

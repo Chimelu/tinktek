@@ -30,30 +30,22 @@ class WayagramOrderService {
    * @param token - Authorization token for API calls.
    * @returns Created order.
    */
-  async placeOrder(
-    cartId: string,
-    userId: string,
- 
- 
-    paymentReference: string
-  ): Promise<any> {
+  async placeOrder(cartId: string, userId: string, paymentReference: string): Promise<any> {
     try {
-      // Fetch the cart using cartId and userId
+      // **Step 1: Fetch the cart**
       const cart = await this.cart.findOne({ id: cartId, userId });
       if (!cart) throw new Error("Cart not found.");
-
-      
-
-      // **Step 1: Verify Payment with Paystack**
+  
+      // **Step 2: Verify Payment with Paystack**
       const isPaymentSuccessful = await this.verifyPaystackPayment(paymentReference, cart.totalFee);
       if (!isPaymentSuccessful) {
         throw new Error("Payment verification failed. Order not placed.");
       }
-
-      // **Step 2: Generate a Unique Delivery Token**
+  
+      // **Step 3: Generate a Unique Delivery Token**
       const deliveryToken = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-
-      // **Step 3: Prepare the Order Data**
+  
+      // **Step 4: Prepare the Order Data**
       const orderData = {
         userId,
         items: cart.items.map((product: any) => ({
@@ -65,21 +57,25 @@ class WayagramOrderService {
           price: product.price,
         })),
         deliveryFee: cart.deliveryFee,
-        deliveryAddress:  cart.deliveryAddress,
+        deliveryAddress: cart.deliveryAddress,
         deliveryToken,
         deliveryDate: cart.deliveryDate,
         total: cart.totalFee,
       };
-
-      // **Step 4: Create the Order**
+  
+      // **Step 5: Create the Order**
       const newOrder = await this.orderRepo.create(orderData);
-
+  
+      // **Step 6: Clear the User's Cart**
+      await this.cart.deleteOne({ id: cartId });
+  
       return newOrder;
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error placing order:", error);
       throw new Error(error.message || "Failed to place order.");
     }
   }
+  
 
   private async verifyPaystackPayment(paymentReference: string, expectedAmount: number): Promise<boolean> {
     try {
