@@ -57,8 +57,8 @@ export const addToCart = async (req: Request, res: Response): Promise<Response> 
 
 export const incrementProductQuantity = async (req: Request, res: Response) => {
   try {
-    const { userId, productId } = req.body;
-    const updatedCart = await wayagramCartService.incrementProduct(userId, productId);
+    const { userId, productId , size, color} = req.body;
+    const updatedCart = await wayagramCartService.incrementProduct(userId, productId, size, color);
     return ResponseMessage.success(res,updatedCart, "Product quantity incremented") ;
   } catch (error:any) {
     return ResponseMessage.error(res, null , "Failed to increment product quantity");
@@ -68,8 +68,8 @@ export const incrementProductQuantity = async (req: Request, res: Response) => {
 
 export const decrementProductQuantity = async (req: Request, res: Response) => {
   try {
-    const { userId,  productId } = req.body;
-    const updatedCart = await wayagramCartService.decrementProduct(userId, productId);
+    const { userId,  productId, size, color } = req.body;
+    const updatedCart = await wayagramCartService.decrementProduct(userId, productId, size,color);
     return ResponseMessage.success(res,updatedCart, "Product quantity decremented")
   } catch (error:any) {
     return ResponseMessage.error(res, null , "Failed to decrement product quantity");
@@ -77,8 +77,8 @@ export const decrementProductQuantity = async (req: Request, res: Response) => {
 };
 export const removeProduct = async (req: Request, res: Response) => {
   try {
-    const { userId,  productId } = req.body;
-    const updatedCart = await wayagramCartService.removeFromCart(userId, productId);
+    const { userId,  productId, size, color } = req.body;
+    const updatedCart = await wayagramCartService.removeFromCart(userId, productId, size, color);
     return ResponseMessage.success(res,updatedCart, "Product deleted")
   } catch (error:any) {
     return ResponseMessage.error(res, null , "Failed to delete poduct");

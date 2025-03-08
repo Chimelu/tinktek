@@ -67,15 +67,14 @@ export class CartService {
 
   // Increment product quantity
 
-  async incrementProduct(userId: string, productId: string) {
+  async incrementProduct(userId: string, productId: string, size: string, color: string) {
     // Find the cart for the user
     const cart = await this.cartRepo.findOne({ userId });
-    if (!cart) throw new Error("Cart not found");
+    if (!cart) throw new NotFoundError("Cart not found");
   
     // Update the cart items
     const updatedItems = cart.items.map((item: any) => {
-      if (item.productId === productId) {
-        // Increment quantity and recalculate price
+      if (item.productId === productId && item.size === size && item.color === color) {
         item.quantity += 1;
         item.price = item.quantity * (item.price / (item.quantity - 1)); // Maintain unit price
       }
@@ -94,8 +93,7 @@ export class CartService {
 
 
   // Decrement product quantity
-
-  async decrementProduct(userId: string, productId: string) {
+  async decrementProduct(userId: string, productId: string, size: string, color: string) {
     // Find the cart for the user
     const cart = await this.cartRepo.findOne({ userId });
     if (!cart) throw new NotFoundError("Cart not found");
@@ -103,7 +101,7 @@ export class CartService {
     // Update the cart items
     const updatedItems = cart.items
       .map((item: any) => {
-        if (item.productId === productId) {
+        if (item.productId === productId && item.size === size && item.color === color) {
           item.quantity -= 1;
   
           if (item.quantity > 0) {
@@ -126,20 +124,17 @@ export class CartService {
   }
   
 
-  async removeFromCart(userId: string, productId: string, size?: string, color?: string) {
+  async removeFromCart(userId: string, productId: string, size: string, color: string) {
     // Fetch the user's cart
     const cart = await this.cartRepo.findOne({ userId });
     if (!cart) throw new NotFoundError("Cart not found");
   
-    // Filter out the product that matches productId, size, and color
+    // Filter out only the exact product with matching size & color
     const updatedItems = cart.items.filter(
-      (item: any) =>
-        !(item.productId === productId &&
-          (!size || item.size === size) &&
-          (!color || item.color === color))
+      (item: any) => !(item.productId === productId && item.size === size && item.color === color)
     );
   
-    // If no items remain, you may choose to delete the cart or leave it empty
+    // If no items remain, delete the cart
     if (updatedItems.length === 0) {
       await this.cartRepo.deleteOne({ userId });
       return { message: "Cart is now empty and has been removed." };
@@ -153,7 +148,7 @@ export class CartService {
   
     return { message: "Product removed successfully", totalFee };
   }
-
+  
 
   public async updateDeliveryOption(cartId: string, deliveryOption: "delivery" | "pickup") {
     // Find the cart by ID
