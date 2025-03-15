@@ -77,6 +77,7 @@ export const placeOrder = async (req: Request, res: Response): Promise<Response>
         userId: req.query.userId as string,
         shopId: req.query.shopId as string,
         status: req.query.status as string,
+        id: req.query.id as string,
       };
   
       const result = await wayagramOrderService.getAllOrders(page, limit, filters);

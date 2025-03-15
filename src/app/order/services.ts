@@ -20,7 +20,7 @@ class WayagramOrderService {
 
     this.product = product;
     this.cart = cart;
-   
+     
    
   } 
 
@@ -147,7 +147,7 @@ class WayagramOrderService {
   public async getAllOrders(
     page: number = 1,
     limit: number = 20,
-    filters: { userId?: string; shopId?: string; status?: string } = {}
+    filters: { userId?: string; shopId?: string; status?: string; id?: string } = {}
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -162,6 +162,9 @@ class WayagramOrderService {
         query.shopId = filters.shopId;
       }
       if (filters.status) {
+        query.status = filters.status;
+      }
+      if (filters.id) {
         query.status = filters.status;
       }
   
