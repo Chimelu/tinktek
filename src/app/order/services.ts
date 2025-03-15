@@ -165,7 +165,7 @@ class WayagramOrderService {
         query.status = filters.status;
       }
       if (filters.id) {
-        query.status = filters.status;
+        query.id = filters.id;
       }
   
       // Get the total count of orders matching the query
