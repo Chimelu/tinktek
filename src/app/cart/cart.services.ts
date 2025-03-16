@@ -292,6 +292,7 @@ async getUserCart(userId: string) {
     total: totalFee,
     deliveryOption: cart.deliveryOption,
     pickupAddress: cart.pickUpAddress,
+    deliveryAddress:cart.deliveryAddress || null,
     shippingRegion: shippingAddress?.region || null, // Include if address exists
   };
 }
