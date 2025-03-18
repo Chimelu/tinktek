@@ -8,11 +8,11 @@ import { authenticateUser } from "../../infrastructure/middleware/authMiddleware
 
 const NotificationRouter = Router();
 
-NotificationRouter.get("/get", notification.getAllNotifications);
-NotificationRouter.post("/send/single", notification.sendSingleNotification);
-NotificationRouter.post("/send/all", notification.sendNotificationToAllUsers);
-NotificationRouter.post("/send/delivery-status", notification.sendDeliveryStatusNotification);
-NotificationRouter.post("/send/discount-offer", notification.sendDiscountOfferNotification);
+NotificationRouter.get("/get", authenticateUser, notification.getAllNotifications);
+NotificationRouter.post("/send/single", authenticateUser, notification.sendSingleNotification);
+NotificationRouter.post("/send/all", authenticateUser, notification.sendNotificationToAllUsers);
+NotificationRouter.post("/send/delivery-status", authenticateUser, notification.sendDeliveryStatusNotification);
+NotificationRouter.post("/send/discount-offer", authenticateUser, notification.sendDiscountOfferNotification);
 
 
 
