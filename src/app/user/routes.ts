@@ -17,7 +17,7 @@ UserRouter.patch("/update-profile/:userId", authenticateUser, user.updateProfile
 UserRouter.patch("/change-password/:userId", authenticateUser, user.changePassword);  
 UserRouter.post("/resend-otp", user.resendOtp) 
 UserRouter.post("/verify-otp", user.verifyOtp); 
-UserRouter.get("/get-user", user.getUsers); 
+UserRouter.get("/get-user", authenticateUser, user.getUsers); 
 UserRouter.post("/forgot-password", user.forgotPassword); 
 UserRouter.post("/reset-password", user.resetPassword); 
 
